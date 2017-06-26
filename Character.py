@@ -304,6 +304,7 @@ class Character(EventObject):
     def __init__(self, cn, sprite_sheet, team):
         super(Character, self).__init__()
         self.name = cn
+        self.sprite = None # character picture
         self.fsm = FSM_Machine(self)
         self.sprite_sheet = sprite_sheet
         self.team = team
@@ -315,10 +316,19 @@ class Character(EventObject):
         self.moving_target_y = 324
         self.pos_x = 288
         self.pos_y = 288
-        self.ap = 15    # action point, for moving and spelling
-        self.hp = 1
-        self.mp = 1
-        self.attack_range = 1
+
+        self.lvl = 1            # level
+        self.exp = 0            # experience
+        self.ap = 15            # action point, for moving, attacking and spelling
+        self.hp = 1             # health point
+        self.mp = 1             # magic point
+        self.agility = 1        # agility
+        self.strength = 1       # strength
+        self.intelligence = 1   # intelligence
+        self.defense = 1        # defense
+        self.resistance = 1     # resistance
+        self.attack = 1
+        self.attack_range = 1   # physical attack range, will be not shown at character plane
 
         self.direction = Character_State_Enum.STAND
         self.command_queue = Queue.Queue()
@@ -387,6 +397,8 @@ class Character(EventObject):
 
         # event handler
 
+    def set_picture(self, pic_path):
+        self.sprite = pygame.image.load(pic_path).convert_alpha()
 
     def update(self, et):
         self.process_evt_queue()

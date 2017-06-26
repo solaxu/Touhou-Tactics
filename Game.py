@@ -10,7 +10,8 @@ from Character import *
 from Event import *
 from Map import *
 from LocalInput import *
-
+from pygame.font import *
+from GUI import GuiManager
 
 class CGameApp(EventObject):
     
@@ -23,7 +24,7 @@ class CGameApp(EventObject):
         self.screen_h = height
         pygame.init()
         self.screen = pygame.display.set_mode((width, height), 0, 32)
-        self.font = pygame.font.SysFont("arial", 20)
+        self.font = pygame.font.SysFont("arial", 15)
         self.clock = pygame.time.Clock()
         self.team_red = None
         self.team_blue = None
@@ -31,8 +32,10 @@ class CGameApp(EventObject):
         self.cur_team = None
         self.offset_x = 0
         self.offset_y = 0
+        self.gui_manager = None
 
     def create(self):
+        self.gui_manager = GuiManager()
         # test character
         sprite_sheet = Sprite_Sheet("Media/walkings/博丽灵梦1.png", 36, 36, 4, 4)
 
@@ -42,7 +45,10 @@ class CGameApp(EventObject):
         self.team_blue = Team(Team_Enum.TEAM_BLUE, self.level_map)
         self.level_map.team_red = self.team_red
         self.level_map.team_blue = self.team_blue
-        self.team_red.add_character(Character("HakureRemu", sprite_sheet, self.team_red))
+
+        hakurei_reimu = Character("Hakurei Reimu", sprite_sheet, self.team_red)
+        hakurei_reimu.set_picture("Media/characters/博丽灵梦.png")
+        self.team_red.add_character(hakurei_reimu)
 
         # set current team for test
         self.cur_team = self.team_red
@@ -71,6 +77,7 @@ class CGameApp(EventObject):
     
     def draw(self, et):
         self.level_map.draw(et)
+        self.gui_manager.draw(et)
         return
     
     def handle_mouse_lbtn_down(self, evt):
@@ -86,5 +93,6 @@ class CGameApp(EventObject):
     @staticmethod
     def get_instance():
         if CGameApp.instance is None:
+            print "Create App Instance"
             CGameApp.instance = CGameApp("A Prototype", 1000, 750)
         return CGameApp.instance

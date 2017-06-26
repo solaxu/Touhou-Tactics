@@ -5,12 +5,20 @@ import Queue
 
 class EventType(Enum):
 
+    #
     MOUSE_LBTN_DOWN = 0
+    MOUSE_HOVER = 1 # equals mouse motion
+    #
+    GUI_BTN_PRESSED = 50
+    GUI_MOUSE_HOVER = 51
+    #
     SELECT_CHARACTER = 100
     MOVE_CHARACTER = 101
     CHARACTER_STOP_MOVING = 102
     SCROLL_MAP = 103
     SWITCH_MINI_MAP = 104
+    SHOW_CHARACTER_PLANE = 105
+    CLOSE_CHARACTER_PLANE = 106
 
 
 class Event(object):
@@ -26,7 +34,13 @@ class Event_Mouse_LBTN_DOWN(Event):
     def __init__(self, type, mouse_pos):
         super(Event_Mouse_LBTN_DOWN, self).__init__(type)
         self.mouse_pos = mouse_pos
-        
+
+class Event_Mouse_Hover(Event):
+
+    def __init__(self, type, mouse_pos):
+        super(Event_Mouse_Hover, self).__init__(type)
+        self.mouse_pos = mouse_pos
+
 class Event_Character_Stop_Moving(Event):
     
     def __init__(self, type):
@@ -43,6 +57,14 @@ class Event_Switch_MiniMap(Event):
     
     def __init__(self, type):
         super(Event_Switch_MiniMap, self).__init__(type)
+
+# Gui Event
+
+class Event_Gui_Btn_Pressed(Event):
+
+    def __init__(self, type, name):
+        super(Event_Gui_Btn_Pressed, self).__init__(type)
+        self.name = name
 
 
 class EventObject(object):

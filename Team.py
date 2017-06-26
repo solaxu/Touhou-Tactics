@@ -56,6 +56,9 @@ class Team_State_Character_Selected(FSM_State):
         super(Team_State_Character_Selected, self).update(et)
         for (name, c) in self.fsm.owner.characters.items():
             c.update(et)
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        self.fsm.owner.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_PLANE))
 
     def draw(self, et):
         super(Team_State_Character_Selected, self).draw(et)
@@ -156,6 +159,9 @@ class Team(EventObject):
             if not tile.marked:
                 self.lvl_map.reset_map()
                 self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
+                from Game import CGameApp
+                app = CGameApp.get_instance()
+                self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_PLANE))
             else:
                 # do A* to find moving path, and change state to character moving
                 print "A* to find moving path"

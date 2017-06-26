@@ -24,7 +24,8 @@ class LocalInput(EventObject):
     @staticmethod
     def event_loop():
         from Game import CGameApp
-
+        from Map import *
+        app = CGameApp.get_instance()
         LocalInput.keyboard = pygame.key.get_pressed()
         LocalInput.mouse_pos = pygame.mouse.get_pos()
         LocalInput.mouse_rel = pygame.mouse.get_rel()
@@ -35,8 +36,7 @@ class LocalInput(EventObject):
                 exit()
             elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or \
                     (event.type == pygame.MOUSEMOTION and LocalInput.mouse_keys[0]):
-                from Map import *
-                app = CGameApp.get_instance()
+                app.send_event(app.gui_manager, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
                 if app.level_map.fsm.is_in_state(Map_State_Enum.MAP_SHOW_MINI_MAP):
                     print "Scroll Map by Mouse with Mini-map"
                     # calculate offset
@@ -75,4 +75,6 @@ class LocalInput(EventObject):
             elif event.type == pygame.KEYDOWN and event.key == K_m:
                 LocalInput.get_instance().send_event(CGameApp.get_instance().level_map,
                                                      Event_Switch_MiniMap(EventType.SWITCH_MINI_MAP))
+            elif LocalInput.mouse_rel[0] != 0 or LocalInput.mouse_rel[1] != 0:
+                app.send_event(app.gui_manager, Event_Mouse_Hover(EventType.MOUSE_HOVER, LocalInput.mouse_pos))
 
