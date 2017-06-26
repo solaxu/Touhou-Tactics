@@ -209,7 +209,7 @@ class GuiManager(EventObject):
     def handle_mouse_lbtn_down(self, evt):
         wnd = self.get_wnd_by_mouse(evt.mouse_pos)
         if wnd is not None and wnd.show:
-            widget = wnd.get_widget_by_mouse()
+            widget = wnd.get_widget_by_mouse(evt.mouse_pos)
             if widget.show:
                 self.send_event(widget, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, evt.mouse_pos))
         return
@@ -269,7 +269,6 @@ class Character_Plane(GuiWindow):
         super(Character_Plane, self).__init__(Gui_Enum.Character_Plane, 0, 0,
                                               Character_Plane_Enum.WIDTH.value,
                                               Character_Plane_Enum.HEIGHT.value)
-        self.show = False
 
         self.character_pic = self.add_widget(GuiPicture(Character_Plane_Enum.Character_Pic, self.x, self.y,
                                                     Character_Plane_Enum.WIDTH.value,
@@ -279,104 +278,120 @@ class Character_Plane(GuiWindow):
                                                       self.x, self.character_pic.y + self.character_pic.h,
                                                       Character_Plane_Enum.WIDTH.value,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "Name", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "???", (255, 255, 255), self))
 
         self.character_lvl = self.add_widget(GuiLabel(Character_Plane_Enum.Character_Level,
                                                      self.x,
                                                      self.character_name.y + self.character_name.h,
                                                      Character_Plane_Enum.WIDTH.value / 2,
                                                      Character_Plane_Enum.PROP_HEIGHT.value,
-                                                     (0, 0, 0), 255, "Level", (255, 255, 255), self))
+                                                     (0, 0, 0), 255, "LV:", (255, 255, 255), self))
 
         self.character_ap = self.add_widget(GuiLabel(Character_Plane_Enum.Character_AP,
                                                      self.x + self.character_lvl.w,
                                                      self.character_name.y + self.character_name.h,
                                                      Character_Plane_Enum.WIDTH.value / 2,
                                                      Character_Plane_Enum.PROP_HEIGHT.value,
-                                                     (0, 0, 0), 255, "AP", (255, 255, 255), self))
+                                                     (0, 0, 0), 255, "AP:", (255, 255, 255), self))
 
         self.character_hp = self.add_widget(GuiLabel(Character_Plane_Enum.Character_HP,
                                                      self.x,
                                                      self.character_lvl.y + self.character_lvl.h,
                                                      Character_Plane_Enum.WIDTH.value / 2,
                                                      Character_Plane_Enum.PROP_HEIGHT.value,
-                                                     (0, 0, 0), 255, "HP", (255, 255, 255), self))
+                                                     (0, 0, 0), 255, "HP:", (255, 255, 255), self))
 
         self.character_mp = self.add_widget(GuiLabel(Character_Plane_Enum.Character_MP,
                                                      self.x + self.character_hp.w,
                                                      self.character_lvl.y + self.character_lvl.h,
                                                      Character_Plane_Enum.WIDTH.value / 2,
                                                      Character_Plane_Enum.PROP_HEIGHT.value,
-                                                     (0, 0, 0), 255, "MP", (255, 255, 255), self))
+                                                     (0, 0, 0), 255, "MP:", (255, 255, 255), self))
 
         self.character_atk = self.add_widget(GuiLabel(Character_Plane_Enum.Character_ATK,
                                                       self.x,
                                                       self.character_hp.y + self.character_hp.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "ATK", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "ATK:", (255, 255, 255), self))
 
         self.character_atk_rng = self.add_widget(GuiLabel(Character_Plane_Enum.Character_ATK_RNG,
                                                           self.x + self.character_atk.w,
                                                           self.character_hp.y + self.character_hp.h,
                                                           Character_Plane_Enum.WIDTH.value / 2,
                                                           Character_Plane_Enum.PROP_HEIGHT.value,
-                                                          (0, 0, 0), 255, "ATK RNG", (255, 255, 255), self))
+                                                          (0, 0, 0), 255, "RNG:", (255, 255, 255), self))
 
         self.character_def = self.add_widget(GuiLabel(Character_Plane_Enum.Character_DEF,
                                                       self.x,
                                                       self.character_atk.y + self.character_atk.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "DEF", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "DEF:", (255, 255, 255), self))
 
         self.character_res = self.add_widget(GuiLabel(Character_Plane_Enum.Character_RES,
                                                       self.x + self.character_atk.w,
                                                       self.character_atk.y + self.character_atk.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "RES", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "RES:", (255, 255, 255), self))
 
         self.character_str = self.add_widget(GuiLabel(Character_Plane_Enum.Character_STR,
                                                       self.x,
                                                       self.character_def.y + self.character_def.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (255, 0, 0), 255, "STR", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "STR:", (255, 255, 255), self))
 
         self.character_agi = self.add_widget(GuiLabel(Character_Plane_Enum.Character_AGI,
                                                       self.x + self.character_def.w,
                                                       self.character_def.y + self.character_def.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "AGI", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "AGI:", (255, 255, 255), self))
 
         self.character_int = self.add_widget(GuiLabel(Character_Plane_Enum.Character_INT,
                                                       self.x,
                                                       self.character_str.y + self.character_str.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "INT", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "INT:", (255, 255, 255), self))
 
         self.character_exp = self.add_widget(GuiLabel(Character_Plane_Enum.Character_EXP,
                                                       self.x + self.character_str.w,
                                                       self.character_str.y + self.character_str.h,
                                                       Character_Plane_Enum.WIDTH.value / 2,
                                                       Character_Plane_Enum.PROP_HEIGHT.value,
-                                                      (0, 0, 0), 255, "EXP", (255, 255, 255), self))
+                                                      (0, 0, 0), 255, "EXP:", (255, 255, 255), self))
 
     def link_to_character(self, character):
-        self.character_name.set_text(character.name, (255, 255, 255))
-        self.character_pic.set_picture(character.sprite)
-        self.character_lvl.set_text("Lv: " + str(character.lvl), (255, 255, 255))
-        self.character_str.set_text("Str: " + str(character.strength), (255, 255, 255))
-        self.character_agi.set_text("Agi: " + str(character.agility), (255, 255, 255))
-        self.character_int.set_text("Int: " + str(character.intelligence), (255, 255, 255))
-        self.character_atk.set_text("Atk: " + str(character.attack), (255, 255, 255))
-        self.character_atk_rng.set_text("Rng: " + str(character.attack_range), (255, 255, 255))
-        self.character_def.set_text("Def: " + str(character.defense), (255, 255, 255))
-        self.character_res.set_text("Res: " + str(character.resistance), (255, 255, 255))
-        self.character_exp.set_text("Exp: " + str(character.exp), (255, 255, 255))
-        self.character_ap.set_text("AP: " + str(character.ap), (255, 255, 255))
-        self.character_hp.set_text("HP: " + str(character.hp), (255, 255, 255))
-        self.character_mp.set_text("MP: " + str(character.mp), (255, 255, 255))
+        if character is None:
+            self.character_name.set_text("???", (255, 255, 255))
+            self.character_pic.set_picture(character.sprite)
+            self.character_lvl.set_text("LV:", (255, 255, 255))
+            self.character_str.set_text("STR:", (255, 255, 255))
+            self.character_agi.set_text("AGI:", (255, 255, 255))
+            self.character_int.set_text("INT:", (255, 255, 255))
+            self.character_atk.set_text("ATK:", (255, 255, 255))
+            self.character_atk_rng.set_text("RNG:", (255, 255, 255))
+            self.character_def.set_text("DEF:", (255, 255, 255))
+            self.character_res.set_text("RES:", (255, 255, 255))
+            self.character_exp.set_text("EXP:", (255, 255, 255))
+            self.character_ap.set_text("AP:", (255, 255, 255))
+            self.character_hp.set_text("HP:", (255, 255, 255))
+            self.character_mp.set_text("MP:", (255, 255, 255))
+        else:
+            self.character_name.set_text(character.name, (255, 255, 255))
+            self.character_pic.set_picture(character.sprite)
+            self.character_lvl.set_text("LV: " + str(character.lvl), (255, 255, 255))
+            self.character_str.set_text("STR: " + str(character.strength), (255, 255, 255))
+            self.character_agi.set_text("AGI: " + str(character.agility), (255, 255, 255))
+            self.character_int.set_text("INT: " + str(character.intelligence), (255, 255, 255))
+            self.character_atk.set_text("ATK: " + str(character.attack), (255, 255, 255))
+            self.character_atk_rng.set_text("RNG: " + str(character.attack_range), (255, 255, 255))
+            self.character_def.set_text("DEF: " + str(character.defense), (255, 255, 255))
+            self.character_res.set_text("RES: " + str(character.resistance), (255, 255, 255))
+            self.character_exp.set_text("EXP: " + str(character.exp), (255, 255, 255))
+            self.character_ap.set_text("AP: " + str(character.ap), (255, 255, 255))
+            self.character_hp.set_text("HP: " + str(character.hp), (255, 255, 255))
+            self.character_mp.set_text("MP: " + str(character.mp), (255, 255, 255))

@@ -80,7 +80,7 @@ class LevelMap(EventObject):
             x = c_x - 1
             tile = self.get_tile_by_index(x, c_y)
             tile.G = abs(t_x - x) + abs(t_y - c_y)
-            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+#            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if not tile.occupy:
                 tile.parent_tile = start_tile
                 tile.in_open_list = True
@@ -89,7 +89,7 @@ class LevelMap(EventObject):
             x = c_x + 1
             tile = self.get_tile_by_index(x, c_y)
             tile.G = abs(t_x - x) + abs(t_y - c_y)
-            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+#            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if not tile.occupy:
                 tile.parent_tile = start_tile
                 tile.in_open_list = True
@@ -98,7 +98,7 @@ class LevelMap(EventObject):
             y = c_y - 1
             tile = self.get_tile_by_index(c_x, y)
             tile.G = abs(t_x - c_x) + abs(t_y - y)
-            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+#            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if not tile.occupy:
                 tile.parent_tile = start_tile
                 tile.in_open_list = True
@@ -107,13 +107,14 @@ class LevelMap(EventObject):
             y = c_y + 1
             tile = self.get_tile_by_index(c_x, y)
             tile.G = abs(t_x - c_x) + abs(t_y - y)
-            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+#            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if not tile.occupy:
                 tile.parent_tile = start_tile
                 tile.in_open_list = True
                 self.open_list.put(tile)
 
     def a_star_path_finding(self, t_x, t_y, target_tile):
+#        print "Target info: H %s G %s Pos_x %s Pos_y %s" % (target_tile.H, target_tile.G, target_tile.pos_x, target_tile.pos_y)
         while (not self.open_list.empty()) and (not target_tile.in_open_list):
             otile = self.open_list.get()
             otile.in_close_list = True
@@ -134,8 +135,8 @@ class LevelMap(EventObject):
                     else:  # update tiles in open list
                         if tile.H < otile.H:
                             tile.parent_tile = otile
-                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
-            if c_x < self.tile_rows - 1:
+ #                   print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+            if c_x < self.tile_cols - 1:
                 x = c_x + 1
                 tile = self.get_tile_by_coord(otile.pos_x + self.tile_width, otile.pos_y)
                 # print "step: %s, H: %s" % (tile.step, tile.a_star_h)
@@ -148,7 +149,7 @@ class LevelMap(EventObject):
                     else:  # update tiles in open list
                         if tile.H < otile.H:
                             tile.parent_tile = otile
-                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+ #                   print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if c_y > 0:
                 y = c_y - 1
                 tile = self.get_tile_by_coord(otile.pos_x, otile.pos_y - self.tile_height)
@@ -162,8 +163,8 @@ class LevelMap(EventObject):
                     else:  # update tiles in open list
                         if tile.H < otile.H:
                             tile.parent_tile = otile
-                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
-            if c_y < self.tile_height - 1:
+ #                   print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+            if c_y < self.tile_rows - 1:
                 y = c_y + 1
                 tile = self.get_tile_by_coord(otile.pos_x, otile.pos_y + self.tile_height)
                 # print "step: %s, H: %s" % (tile.step, tile.a_star_h)
@@ -176,7 +177,7 @@ class LevelMap(EventObject):
                     else:  # update tiles in open list
                         if tile.H < otile.H:
                             tile.parent_tile = otile
-                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+#                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
 
 
     def bfs_travel(self, tile, color, step):
@@ -187,11 +188,11 @@ class LevelMap(EventObject):
             tile = tile_queue.get()
             tile.marked = True
             tile.color = color
+#            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
             if tile.H >= step:
                 continue
 
             tile_i = self.get_tile_index(tile)
-            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
 
             # left
             left_ix = tile_i[0] - 1
@@ -443,8 +444,11 @@ class PrototypeLevelMap(LevelMap):
                 for elem in row:
                     index_x += 1
                     t = int(elem)
-                    occupy = t != Prototype_Map_Enum.TILE_GRASS.value and t != Prototype_Map_Enum.TILE_MAGIC_CIRCLR.value
-                    tile = MapTile(self.tile_imgs[t], self.tile_width, self.tile_height, occupy)
+                    occupy = t == Prototype_Map_Enum.TILE_GRASS.value or \
+                             t == Prototype_Map_Enum.TILE_MAGIC_CIRCLR.value
+                    if t == Prototype_Map_Enum.TILE_SAND.value:
+                        occupy = True
+                    tile = MapTile(self.tile_imgs[t], self.tile_width, self.tile_height, not occupy)
 #                    print str(occupy) + " ",
                     tile.set_pos(self.tile_width * index_x, self.tile_height * index_y)
                     self.tiles.append(tile)

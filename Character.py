@@ -319,7 +319,7 @@ class Character(EventObject):
 
         self.lvl = 1            # level
         self.exp = 0            # experience
-        self.ap = 15            # action point, for moving, attacking and spelling
+        self.ap = 10            # action point, for moving, attacking and spelling
         self.hp = 1             # health point
         self.mp = 1             # magic point
         self.agility = 1        # agility

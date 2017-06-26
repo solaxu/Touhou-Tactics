@@ -24,7 +24,7 @@ class CGameApp(EventObject):
         self.screen_h = height
         pygame.init()
         self.screen = pygame.display.set_mode((width, height), 0, 32)
-        self.font = pygame.font.SysFont("arial", 15)
+        self.font = pygame.font.Font("Media/DeliusSwashCaps-Regular.ttf", 12)
         self.clock = pygame.time.Clock()
         self.team_red = None
         self.team_blue = None

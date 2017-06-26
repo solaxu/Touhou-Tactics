@@ -151,7 +151,7 @@ class Team(EventObject):
                     return
                 print "Select a Character called " + self.character_selected.name
                 # step 3 for test
-                self.lvl_map.bfs_travel(tile, (0, 0, 255, 196), 3)
+                self.lvl_map.bfs_travel(tile, (0, 0, 255, 196), self.character_selected.ap)
                 self.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
         elif self.fsm.is_in_state(Team_Enum.TEAM_CHARACTER_SELECTED):
             if not self.character_selected.fsm.is_in_state(Character_State_Enum.STAND):
@@ -159,23 +159,24 @@ class Team(EventObject):
             if not tile.marked:
                 self.lvl_map.reset_map()
                 self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
-                from Game import CGameApp
-                app = CGameApp.get_instance()
-                self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_PLANE))
+                # from Game import CGameApp
+                # app = CGameApp.get_instance()
+                self.character_selected = None
+                # self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_PLANE))
             else:
                 # do A* to find moving path, and change state to character moving
-                print "A* to find moving path"
+#                print "A* to find moving path"
                 start_tile = self.lvl_map.get_tile_by_index(self.character_selected.pos_x / self.lvl_map.tile_width, self.character_selected.pos_y / self.lvl_map.tile_height)
                 s_x = start_tile.pos_x / self.lvl_map.tile_width
                 s_y = start_tile.pos_y / self.lvl_map.tile_height
                 t_x = tile.pos_x / self.lvl_map.tile_width
                 t_y = tile.pos_y / self.lvl_map.tile_height
                 self.lvl_map.init_a_star_open_list(s_x, s_y, t_x, t_y, start_tile)
-                print "Finding"
+#                print "Finding"
                 self.lvl_map.a_star_path_finding(t_x, t_y, tile)
                 path = deque()
                 while tile.parent_tile is not None:
-                    print "Path Coords: %s, %s" % (tile.pos_x, tile.pos_y)
+#                    print "Path Coords: %s, %s" % (tile.pos_x, tile.pos_y)
                     if tile.pos_x > tile.parent_tile.pos_x:
                         path.append(Character_State_Enum.MOVE_RIGHT)
                     elif tile.pos_x < tile.parent_tile.pos_x:

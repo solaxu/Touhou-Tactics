@@ -87,5 +87,6 @@ class EventObject(object):
     def process_evt_queue(self):
         while not self.evt_queue.empty():
             evt = self.evt_queue.get()
-            self.handler_map[evt.evt_type](evt)
+            if self.handler_map.has_key(evt.evt_type):
+                self.handler_map[evt.evt_type](evt)
     
