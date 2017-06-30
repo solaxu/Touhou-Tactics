@@ -445,14 +445,26 @@ class Character_Control_Menu(GuiWindow):
 
         # new handlers
         self.add_widget_handlers(Character_Control_Enum.MOVE_BTN, self.handle_move_btn)
+        self.add_widget_handlers(Character_Control_Enum.ATTACK_BTN, self.handle_attack_btn)
 
     def handle_move_btn(self):
+        print "Handle Move Btn"
         from Game import CGameApp
         app = CGameApp.get_instance()
         self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
         tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x, app.cur_team.character_selected.pos_y)
         app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_team.character_selected.ap)
+
+    def handle_attack_btn(self):
+        print "Handle Attack Btn"
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_ATTACK_CMD))
+        self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
+        tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x,
+                                               app.cur_team.character_selected.pos_y)
+        app.level_map.bfs_travel(tile, (255, 0, 0, 196), app.cur_team.character_selected.attack_range)
 
     def set_pos(self, x, y):
         off_x = x - self.x

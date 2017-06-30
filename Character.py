@@ -323,6 +323,7 @@ class Character_State_Attack(FSM_State):
 
     def draw(self, et):
         super(Character_State_Attack, self).draw(et)
+        self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
 
     def exit(self):
         super(Character_State_Attack, self).exit()
@@ -535,13 +536,26 @@ class Character(EventObject):
 
     def handle_mouse_lbtn_down(self, evt):
         from Team import Team_Enum
+
+        # attack
+        if self.fsm.is_in_state(Character_State_Enum.ATTACK):
+            tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
+
+            if not tile.marked:
+                self.team.lvl_map.reset_map()
+                self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+                self.team.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
+            else:
+                print "Do Attack and Play Attack Animations"
+
+        # stand for mving
         if self.fsm.is_in_state(Character_State_Enum.STAND):
             tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
 
             if not tile.marked:
-                return
-                from Team import Team_Enum
+#                return
                 self.team.lvl_map.reset_map()
+                self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
                 self.team.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
             else:
                 # do A* to find moving path, and change state to character moving

@@ -108,13 +108,10 @@ class Team(EventObject):
         x = mouse_pos[0] - app.offset_x
         y = mouse_pos[1] - app.offset_y
 
-        for (name,character) in self.characters.items():
+        for (name, character) in self.characters.items():
             if QuadTreeForTile.check_tile(character.pos_x, character.pos_y,
             Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value, x, y, character.sprite_sheet.frame_w, character.sprite_sheet.frame_h):
-                self.character_selected = character
-                self.character_selected.selected = True
                 return character
-        self.character_selected = None
         return None
 
     def update(self, et):
@@ -148,8 +145,13 @@ class Team(EventObject):
         app = CGameApp.get_instance()
         if self.character_selected is None:
             self.character_selected = self.select_character_by_mouse(evt.mouse_pos)
+            self.character_selected.selected = True
         if self.character_selected is not None:
-            if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
-                self.send_event(self.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
-                self.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_MENU))
+            mouse_character = self.select_character_by_mouse(evt.mouse_pos)
+            if mouse_character is not None:
+                if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
+                    self.send_event(self.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
+                    self.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_MENU))
+                if self.character_selected.fsm.is_in_state(Character_State_Enum.ATTACK):
+                    print "Do Attack"
             self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
