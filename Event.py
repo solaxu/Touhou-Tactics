@@ -1,6 +1,7 @@
 # _*_ coding: utf-8 _*_
 
 from enum import Enum
+
 import Queue
 
 class EventType(Enum):
@@ -17,8 +18,12 @@ class EventType(Enum):
     CHARACTER_STOP_MOVING = 102
     SCROLL_MAP = 103
     SWITCH_MINI_MAP = 104
-    SHOW_CHARACTER_PLANE = 105
-    CLOSE_CHARACTER_PLANE = 106
+    SHOW_CHARACTER_MENU = 105
+    CLOSE_CHARACTER_MENU = 106
+    CHARACTER_MOVE_CMD = 107
+    CHARACTER_ITEM_CMD = 108
+    CHARACTER_ATTACK_CMD = 109
+    CHARACTER_SKILL_CMD = 110
 
 
 class Event(object):

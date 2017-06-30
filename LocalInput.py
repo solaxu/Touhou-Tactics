@@ -75,6 +75,4 @@ class LocalInput(EventObject):
             elif event.type == pygame.KEYDOWN and event.key == K_m:
                 LocalInput.get_instance().send_event(CGameApp.get_instance().level_map,
                                                      Event_Switch_MiniMap(EventType.SWITCH_MINI_MAP))
-            elif LocalInput.mouse_rel[0] != 0 or LocalInput.mouse_rel[1] != 0:
-                app.send_event(app.gui_manager, Event_Mouse_Hover(EventType.MOUSE_HOVER, LocalInput.mouse_pos))
 

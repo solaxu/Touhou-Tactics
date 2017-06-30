@@ -10,7 +10,7 @@ class Team_Enum(Enum):
     
     TEAM_RED = 0
     TEAM_BLUE = 1
-    TEAM_CHARACTER_SELECTED = 2
+    TEAM_CHARACTER_MOVE = 2
     TEAM_NORMAL = 3
 
 # Team state
@@ -46,7 +46,7 @@ class Team_State_Character_Selected(FSM_State):
 
     def __init__(self, fsm):
         super(Team_State_Character_Selected, self).__init__(fsm)
-        self.sn = Team_Enum.TEAM_CHARACTER_SELECTED
+        self.sn = Team_Enum.TEAM_CHARACTER_MOVE
 
     def enter(self):
         super(Team_State_Character_Selected, self).enter()
@@ -56,9 +56,6 @@ class Team_State_Character_Selected(FSM_State):
         super(Team_State_Character_Selected, self).update(et)
         for (name, c) in self.fsm.owner.characters.items():
             c.update(et)
-        from Game import CGameApp
-        app = CGameApp.get_instance()
-        self.fsm.owner.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_PLANE))
 
     def draw(self, et):
         super(Team_State_Character_Selected, self).draw(et)
@@ -95,7 +92,7 @@ class Team(EventObject):
 
     def add_character(self, c):
         self.characters[c.name] = c
-    
+
     def del_character(self, name):
         del self.characters[name]
 
@@ -133,6 +130,11 @@ class Team(EventObject):
         print "Character stops"
         self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
 
+    def handle_character_move(self, evt):
+        if self.character_selected is not None:
+            pass
+        return
+
     def handle_attack(self, evt):
         #
         return
@@ -141,55 +143,13 @@ class Team(EventObject):
         return
 
     def handle_mouse_lbtn_down(self, evt):
-        print "Mouse Left Button Down in Team"
-        tile = self.lvl_map.select_tile_by_mouse(evt.mouse_pos)
-        # do nothing when character is moving
-        if self.fsm.is_in_state(Team_Enum.TEAM_NORMAL):
+        from LocalInput import LocalInput
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        if self.character_selected is None:
             self.character_selected = self.select_character_by_mouse(evt.mouse_pos)
-            if self.character_selected is not None:
-                if not self.character_selected.fsm.is_in_state(Character_State_Enum.STAND):
-                    return
-                print "Select a Character called " + self.character_selected.name
-                # step 3 for test
-                self.lvl_map.bfs_travel(tile, (0, 0, 255, 196), self.character_selected.ap)
-                self.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
-        elif self.fsm.is_in_state(Team_Enum.TEAM_CHARACTER_SELECTED):
-            if not self.character_selected.fsm.is_in_state(Character_State_Enum.STAND):
-                return
-            if not tile.marked:
-                self.lvl_map.reset_map()
-                self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
-                # from Game import CGameApp
-                # app = CGameApp.get_instance()
-                self.character_selected = None
-                # self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_PLANE))
-            else:
-                # do A* to find moving path, and change state to character moving
-#                print "A* to find moving path"
-                start_tile = self.lvl_map.get_tile_by_index(self.character_selected.pos_x / self.lvl_map.tile_width, self.character_selected.pos_y / self.lvl_map.tile_height)
-                s_x = start_tile.pos_x / self.lvl_map.tile_width
-                s_y = start_tile.pos_y / self.lvl_map.tile_height
-                t_x = tile.pos_x / self.lvl_map.tile_width
-                t_y = tile.pos_y / self.lvl_map.tile_height
-                self.lvl_map.init_a_star_open_list(s_x, s_y, t_x, t_y, start_tile)
-#                print "Finding"
-                self.lvl_map.a_star_path_finding(t_x, t_y, tile)
-                path = deque()
-                while tile.parent_tile is not None:
-#                    print "Path Coords: %s, %s" % (tile.pos_x, tile.pos_y)
-                    if tile.pos_x > tile.parent_tile.pos_x:
-                        path.append(Character_State_Enum.MOVE_RIGHT)
-                    elif tile.pos_x < tile.parent_tile.pos_x:
-                        path.append(Character_State_Enum.MOVE_LEFT)
-                    elif tile.pos_y > tile.parent_tile.pos_y:
-                        path.append(Character_State_Enum.MOVE_DOWN)
-                    elif tile.pos_y < tile.parent_tile.pos_y:
-                        path.append(Character_State_Enum.MOVE_UP)
-                    tile = tile.parent_tile
-                while len(path) != 0:
-                    self.character_selected.command_queue.put(path.pop())
-                self.character_selected.command_queue.put(Character_State_Enum.STAND)
-                self.lvl_map.reset_map()
-                self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
-
-        return
+        if self.character_selected is not None:
+            if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
+                self.send_event(self.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
+                self.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_MENU))
+            self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))

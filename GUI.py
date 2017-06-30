@@ -9,6 +9,7 @@ class Gui_Enum(Enum):
 
     WND_BORDER_WIDTH = 2
     Character_Plane = 10000
+    Character_Control_Menu = 10001
 
 class GuiElement(EventObject):
 
@@ -91,7 +92,6 @@ class GuiButton(GuiElement):
 
         # register handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_click)
-        self.add_handler(EventType.MOUSE_HOVER, self.handle_mouse_hover)
 
     def draw(self, et):
         from Game import CGameApp
@@ -101,23 +101,19 @@ class GuiButton(GuiElement):
         text_h = self.text_surface.get_height()
         off_x = (self.w - text_w) / 2
         off_y = (self.h - text_h) / 2
-        app.screen.blit(self.surface, ((self.x + off_x, self.y + off_y), (text_w, text_h)))
-
+        app.screen.blit(self.text_surface, ((self.x + off_x, self.y + off_y), (text_w, text_h)))
+        from LocalInput import LocalInput
+        from Map import QuadTreeForTile
+        if QuadTreeForTile.check_tile(self.x, self.y, self.w, self.h, LocalInput.mouse_pos[0], LocalInput.mouse_pos[1], 0, 0):
+            pygame.draw.rect(app.screen, (0, 255, 0), (self.x, self.y, self.w, self.h), Gui_Enum.WND_BORDER_WIDTH.value)
         self.process_evt_queue()
 
-    def handle_click(self):
+    def handle_click(self, evt):
         print str(self.name) + " Button Pressed"
         from Game import CGameApp
         app = CGameApp.get_instance()
         pygame.draw.rect(app.screen, (0, 0, 255), (self.x, self.y, self.w, self.h), 1)
         self.send_event(self.parent, Event_Gui_Btn_Pressed(EventType.GUI_BTN_PRESSED, self.name))
-        return
-
-    def handle_mouse_hover(self):
-        print str(self.name) + " Mouse Hover"
-        from Game import CGameApp
-        app = CGameApp.get_instance()
-        pygame.draw.rect(app.screen, (0, 255, 0), (self.x, self.y, self.w, self.h), Gui_Enum.WND_BORDER_WIDTH.vlaue)
         return
 
 
@@ -162,7 +158,7 @@ class GuiWindow(EventObject):
     def get_widget_by_mouse(self, mouse_pos):
         from Map import QuadTreeForTile
         for (name, widget) in self.widgets.items():
-            if QuadTreeForTile.check_tile(self.x, self.y, self.w, self.h, mouse_pos[0], mouse_pos[1], 0, 0):
+            if QuadTreeForTile.check_tile(widget.x, widget.y, widget.w, widget.h, mouse_pos[0], mouse_pos[1], 0, 0):
                 return widget
         return None
 
@@ -187,11 +183,13 @@ class GuiManager(EventObject):
         # register handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
         self.add_handler(EventType.MOUSE_HOVER, self.handle_mouse_hover)
-        self.add_handler(EventType.SHOW_CHARACTER_PLANE, self.handle_show_character_plane)
-        self.add_handler(EventType.CLOSE_CHARACTER_PLANE, self.handle_close_character_plane)
+        self.add_handler(EventType.SHOW_CHARACTER_MENU, self.handle_show_character_menu)
+        self.add_handler(EventType.CLOSE_CHARACTER_MENU, self.handle_close_character_menu)
         # gui windows
         character_plane = Character_Plane()
         self.gui_wnds[character_plane.name] = character_plane
+        character_menu = Character_Control_Menu()
+        self.gui_wnds[character_menu.name] = character_menu
 
     def get_wnd_by_mouse(self, mouse_pos):
         from Map import QuadTreeForTile
@@ -222,25 +220,29 @@ class GuiManager(EventObject):
                 self.send_event(widget, Event_Mouse_Hover(EventType.MOUSE_HOVER, evt.mouse_pos))
         return
 
-    def handle_show_character_plane(self, evt):
+    def handle_show_character_menu(self, evt):
         from Game import CGameApp
         cur_team = CGameApp.get_instance().cur_team
         if cur_team is not None and cur_team.character_selected is not None:
+            x = cur_team.character_selected.pos_x + 18
+            y = cur_team.character_selected.pos_y + 18
+            self.gui_wnds[Gui_Enum.Character_Control_Menu].set_pos(x, y)
             self.gui_wnds[Gui_Enum.Character_Plane].link_to_character(cur_team.character_selected)
-            self.gui_wnds[Gui_Enum.Character_Plane].show = True
+            self.gui_wnds[Gui_Enum.Character_Control_Menu].show = True
         return
 
-    def handle_close_character_plane(self, evt):
-        from Game import CGameApp
-        cur_team = CGameApp.get_instance().cur_team
-        if cur_team is not None and cur_team.character_selected is not None:
-            self.gui_wnds[Gui_Enum.Character_Plane].show = False
+    def handle_close_character_menu(self, evt):
+        #from Game import CGameApp
+        #cur_team = CGameApp.get_instance().cur_team
+        #if cur_team is not None and cur_team.character_selected is not None:
+        self.gui_wnds[Gui_Enum.Character_Control_Menu].show = False
         return
 
 
 #######################################################################################################################
 # concrete ui
 
+# character plane
 class Character_Plane_Enum(Enum):
 
     WIDTH = 150
@@ -395,3 +397,73 @@ class Character_Plane(GuiWindow):
             self.character_ap.set_text("AP: " + str(character.ap), (255, 255, 255))
             self.character_hp.set_text("HP: " + str(character.hp), (255, 255, 255))
             self.character_mp.set_text("MP: " + str(character.mp), (255, 255, 255))
+
+# character controller menu
+# Commands: Move, Attack, Items, Skills
+class Character_Control_Enum(Enum):
+
+    MOVE_BTN = 0
+    ATTACK_BTN = 1
+    ITEM_BTN = 2
+    SKILL_BTN = 3
+    SLOT_HEIGHT = 25
+    WIDTH = 75
+    HEIGHT = 104
+
+
+class Character_Control_Menu(GuiWindow):
+
+    def __init__(self):
+        super(Character_Control_Menu, self).__init__(Gui_Enum.Character_Control_Menu, 300, 0,
+                                                     Character_Control_Enum.WIDTH.value,
+                                                     Character_Control_Enum.HEIGHT.value)
+
+        self.show = False
+
+        self.move_btn = self.add_widget(GuiButton(Character_Control_Enum.MOVE_BTN, 300, 2,
+                                                  Character_Control_Enum.WIDTH.value,
+                                                  Character_Control_Enum.SLOT_HEIGHT.value,
+                                                  (0, 0, 0), 255, "Move", (255, 255, 255), self))
+
+        self.attack_btn = self.add_widget(GuiButton(Character_Control_Enum.ATTACK_BTN, 300,
+                                                  self.move_btn.y + self.move_btn.h,
+                                                  Character_Control_Enum.WIDTH.value,
+                                                  Character_Control_Enum.SLOT_HEIGHT.value,
+                                                  (0, 0, 0), 255, "Attack", (255, 255, 255), self))
+
+        self.item_btn = self.add_widget(GuiButton(Character_Control_Enum.ITEM_BTN, 300,
+                                                  self.attack_btn.y + self.attack_btn.h,
+                                                  Character_Control_Enum.WIDTH.value,
+                                                  Character_Control_Enum.SLOT_HEIGHT.value,
+                                                  (0, 0, 0), 255, "Item", (255, 255, 255), self))
+
+        self.skill_btn = self.add_widget(GuiButton(Character_Control_Enum.SKILL_BTN, 300,
+                                                  self.item_btn.y + self.item_btn.h,
+                                                  Character_Control_Enum.WIDTH.value,
+                                                  Character_Control_Enum.SLOT_HEIGHT.value,
+                                                  (0, 0, 0), 255, "Skill", (255, 255, 255), self))
+
+        # new handlers
+        self.add_widget_handlers(Character_Control_Enum.MOVE_BTN, self.handle_move_btn)
+
+    def handle_move_btn(self):
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
+        self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
+        tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x, app.cur_team.character_selected.pos_y)
+        app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_team.character_selected.ap)
+
+    def set_pos(self, x, y):
+        off_x = x - self.x
+        off_y = y - self.y
+
+        self.x += off_x
+        self.y += off_y
+
+        for (name, widget) in self.widgets.items():
+            widget.x += off_x
+            widget.y += off_y
+            
+    def draw(self, et):
+        super(Character_Control_Menu, self).draw(et)
