@@ -88,6 +88,7 @@ class Team(EventObject):
 
         # register event handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
+        self.add_handler(EventType.MOUSE_RBTN_DOWN, self.handle_mouse_rbtn_down)
         self.add_handler(EventType.CHARACTER_STOP_MOVING, self.handle_character_stop_moving)
 
     def add_character(self, c):
@@ -110,7 +111,7 @@ class Team(EventObject):
 
         for (name, character) in self.characters.items():
             if QuadTreeForTile.check_tile(character.pos_x, character.pos_y,
-            Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value, x, y, character.sprite_sheet.frame_w, character.sprite_sheet.frame_h):
+            Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value, x, y, 0, 0):
                 return character
         return None
 
@@ -139,19 +140,30 @@ class Team(EventObject):
     def handle_spell(self, evt):
         return
 
+    def handle_mouse_rbtn_down(self, evt):
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        self.lvl_map.reset_map()
+        self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
+
     def handle_mouse_lbtn_down(self, evt):
         from LocalInput import LocalInput
         from Game import CGameApp
         app = CGameApp.get_instance()
+        mouse_character = app.select_character_by_mouse(evt.mouse_pos)
+        if mouse_character is not None:
+            self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
+        if app.cur_team.name != self.name:
+            return
         if self.character_selected is None:
             self.character_selected = self.select_character_by_mouse(evt.mouse_pos)
-            self.character_selected.selected = True
         if self.character_selected is not None:
-            mouse_character = self.select_character_by_mouse(evt.mouse_pos)
+            self.character_selected.selected = True
             if mouse_character is not None:
                 if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
                     self.send_event(self.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
-                    self.send_event(app.gui_manager, Event(EventType.SHOW_CHARACTER_MENU))
-                if self.character_selected.fsm.is_in_state(Character_State_Enum.ATTACK):
+                elif self.character_selected.fsm.is_in_state(Character_State_Enum.ATTACK):
                     print "Do Attack"
+                else:
+                    pass
             self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))

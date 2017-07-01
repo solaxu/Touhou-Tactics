@@ -8,7 +8,8 @@ class EventType(Enum):
 
     #
     MOUSE_LBTN_DOWN = 0
-    MOUSE_HOVER = 1 # equals mouse motion
+    MOUSE_RBTN_DOWN = 1
+    MOUSE_HOVER = 2 # equals mouse motion
     #
     GUI_BTN_PRESSED = 50
     GUI_MOUSE_HOVER = 51
@@ -25,6 +26,8 @@ class EventType(Enum):
     CHARACTER_ATTACK_CMD = 109
     CHARACTER_SKILL_CMD = 110
 
+    CHARACTER_ATTACK_EVT = 111
+
 
 class Event(object):
 
@@ -34,17 +37,33 @@ class Event(object):
         self.reciver = None
         self.delay = 0      # time bomb
 
+class Event_Character_Attack(Event):
+
+    def __init__(self, type, dmg):
+        super(Event_Character_Attack, self).__init__(type)
+        self.dmg = dmg
+
+
 class Event_Mouse_LBTN_DOWN(Event):
 
     def __init__(self, type, mouse_pos):
         super(Event_Mouse_LBTN_DOWN, self).__init__(type)
         self.mouse_pos = mouse_pos
 
+
+class Event_Mouse_RBTN_DOWN(Event):
+    
+    def __init__(self, type, mouse_pos):
+        super(Event_Mouse_RBTN_DOWN, self).__init__(type)
+        self.mouse_pos = mouse_pos
+
+
 class Event_Mouse_Hover(Event):
 
     def __init__(self, type, mouse_pos):
         super(Event_Mouse_Hover, self).__init__(type)
         self.mouse_pos = mouse_pos
+
 
 class Event_Character_Stop_Moving(Event):
     
@@ -65,12 +84,17 @@ class Event_Switch_MiniMap(Event):
 
 # Gui Event
 
+class Event_Gui_Show_Character_Menu(Event):
+
+    def __init__(self, type, character):
+        super(Event_Gui_Show_Character_Menu, self).__init__(type)
+        self.character = character
+
 class Event_Gui_Btn_Pressed(Event):
 
     def __init__(self, type, name):
         super(Event_Gui_Btn_Pressed, self).__init__(type)
         self.name = name
-
 
 class EventObject(object):
 

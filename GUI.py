@@ -208,7 +208,7 @@ class GuiManager(EventObject):
         wnd = self.get_wnd_by_mouse(evt.mouse_pos)
         if wnd is not None and wnd.show:
             widget = wnd.get_widget_by_mouse(evt.mouse_pos)
-            if widget.show:
+            if widget is not None and widget.show:
                 self.send_event(widget, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, evt.mouse_pos))
         return
 
@@ -216,19 +216,20 @@ class GuiManager(EventObject):
         wnd = self.get_wnd_by_mouse(evt.mouse_pos)
         if wnd is not None and wnd.show:
             widget = wnd.get_widget_by_mouse(evt.mouse_pos)
-            if widget.show:
+            if widget is not None and widget.show:
                 self.send_event(widget, Event_Mouse_Hover(EventType.MOUSE_HOVER, evt.mouse_pos))
         return
 
     def handle_show_character_menu(self, evt):
         from Game import CGameApp
-        cur_team = CGameApp.get_instance().cur_team
-        if cur_team is not None and cur_team.character_selected is not None:
-            x = cur_team.character_selected.pos_x + 18
-            y = cur_team.character_selected.pos_y + 18
-            self.gui_wnds[Gui_Enum.Character_Control_Menu].set_pos(x, y)
-            self.gui_wnds[Gui_Enum.Character_Plane].link_to_character(cur_team.character_selected)
-            self.gui_wnds[Gui_Enum.Character_Control_Menu].show = True
+        app = CGameApp.get_instance()
+        if evt.character is not None:
+            self.gui_wnds[Gui_Enum.Character_Plane].link_to_character(evt.character)
+            if evt.character.team.name == app.cur_team.name:
+                x = evt.character.pos_x + 18
+                y = evt.character.pos_y + 18
+                self.gui_wnds[Gui_Enum.Character_Control_Menu].set_pos(x, y)
+                self.gui_wnds[Gui_Enum.Character_Control_Menu].show = True
         return
 
     def handle_close_character_menu(self, evt):

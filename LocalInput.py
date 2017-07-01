@@ -34,6 +34,8 @@ class LocalInput(EventObject):
         for event in pygame.event.get():
             if event.type == QUIT:
                 exit()
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                app.cur_team.send_event(app.cur_team, Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
             elif (event.type == pygame.MOUSEBUTTONDOWN and event.button == 1) or \
                     (event.type == pygame.MOUSEMOTION and LocalInput.mouse_keys[0]):
                 app.send_event(app.gui_manager, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))

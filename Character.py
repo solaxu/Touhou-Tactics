@@ -14,10 +14,11 @@ class Character_State_Enum(Enum):
     MOVE_RIGHT = 3  # Done
     MOVE_UP = 4     # Done
     MOVE_DOWN = 5   # Done
-    DEAD = 6            # Undo
-    ATTACK = 7      # Undo
+    DEAD = 6        # Undo
+    ATTACK = 7      # Doing
     ITEM = 8        # Undo
     SKILL = 9       # Undo
+    ATTACKED = 10   # Doing
     MOVE_TRANSITION = 100     # Done
     DIE_TRANSITION = 100      # Done
 
@@ -67,6 +68,51 @@ class Character_State_Dead(FSM_State):
         super(Character_State_Dead, self).exit()
         # print self.fsm.owner.name + " exit state " + str(self.sn)
 
+# Attacked State
+class Character_State_Attacked(FSM_State):
+    
+    def __init__(self, fsm):
+        super(Character_State_Attacked, self).__init__(fsm)
+        self.sn = Character_State_Enum.ATTACKED
+        self.animation_time = 0
+        self.animrtion_len = 200
+        self.off_x = 0
+        self.off_y = 0
+        self.acc_time = 0
+        self.acc = 0
+        self.character = None
+
+    def enter(self):
+        super(Character_State_Attacked, self).enter()
+        self.character = self.fsm.owner
+        print self.fsm.owner.name + " enter state " + str(self.sn)
+
+    def update(self, et):
+        self.acc_time += et
+        if self.acc_time > 40:
+            self.acc += 1
+            self.acc_time = 0
+        self.animation_time += et
+        return
+
+    def draw(self, et):
+        if self.acc % 2 == 0:
+            self.off_x = -2
+            self.off_y = -2
+        else:
+            self.off_x = 2
+            self.off_y = 2
+        mouse_pos = self.fsm.owner.get_pos()
+        self.fsm.owner.sprite_sheet.draw(0, (mouse_pos[0] + self.off_x, mouse_pos[1] + self.off_y))
+        if self.animation_time > self.animrtion_len:
+            self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+
+    def exit(self):
+        super(Character_State_Attacked, self).exit()
+        self.acc = 0
+        self.acc_time = 0
+        self.animation_time = 0
+        print self.fsm.owner.name + " exit state " + str(self.sn)
 
 # STAND state
 class Character_State_Stand(FSM_State):
@@ -483,6 +529,8 @@ class Character(EventObject):
         self.fsm.add_state(Character_State_Item(self.fsm))
         self.fsm.add_state(Character_State_Skill(self.fsm))
 
+        self.fsm.add_state(Character_State_Attacked(self.fsm))
+
         # add transitions
         '''
                         |---> move right -->|    
@@ -520,7 +568,7 @@ class Character(EventObject):
         self.fsm.add_transition(Character_State_StandToMove_transition(Character_State_Enum.STAND, Character_State_Enum.MOVE_UP,Character_State_Enum.MOVE_UP, self.fsm))
         self.fsm.add_transition(Character_State_StandToMove_transition(Character_State_Enum.STAND, Character_State_Enum.MOVE_DOWN, Character_State_Enum.MOVE_DOWN, self.fsm))
 
-        self.fsm.add_transition(Character_State_Die_Transition(Character_State_Enum.STAND, Character_State_Enum.DEAD, self.fsm))
+        self.fsm.add_transition(Character_State_Die_Transition(Character_State_Enum.WAITING_FOR_CMD, Character_State_Enum.DEAD, self.fsm))
 
         self.fsm.owner = self
 
@@ -533,6 +581,28 @@ class Character(EventObject):
         self.add_handler(EventType.CHARACTER_ITEM_CMD, self.handle_item_cmd)
         self.add_handler(EventType.CHARACTER_SKILL_CMD, self.handle_skill_cmd)
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
+        self.add_handler(EventType.CHARACTER_ATTACK_EVT, self.handle_character_attacked)
+
+    def get_range(self, x, y):
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        tx = x / app.level_map.tile_width
+        ty = y / app.level_map.tile_height
+        ctx = self.pos_x / app.level_map.tile_width
+        cty = self.pos_y / app.level_map.tile_height
+
+        return abs(ctx - tx) + abs(cty - ty)
+
+    def handle_character_attacked(self, evt):
+        self.fsm.change_to_state(Character_State_Enum.ATTACKED)
+        dmg = evt.dmg - self.defense
+        self.hp -= dmg
+        if self.hp <= 0:
+            self.fsm.change_to_state(Character_State_Enum.DEAD)
+            from Game import CGameApp
+            lvl_map = CGameApp.get_instance().level_map
+            tile = lvl_map.get_tile_by_coord(self.pos_x, self.pos_y)
+            tile.marked = False
 
     def handle_mouse_lbtn_down(self, evt):
         from Team import Team_Enum
@@ -541,15 +611,21 @@ class Character(EventObject):
         if self.fsm.is_in_state(Character_State_Enum.ATTACK):
             tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
 
-            if not tile.marked:
-                self.team.lvl_map.reset_map()
-                self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
-                self.team.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
-            else:
-                print "Do Attack and Play Attack Animations"
+            from Game import CGameApp
+            app = CGameApp.get_instance()
+            print "Do Attack and Play Attack Animations"
+            self.team.lvl_map.reset_map()
+            mouse_character = app.select_character_by_mouse(evt.mouse_pos)
+            if mouse_character is not None:
+                rng = self.get_range(mouse_character.pos_x, mouse_character.pos_y)
+                if rng <= self.attack_range:
+                    print "Do Attack"
+                    self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+                    self.send_event(mouse_character, Event_Character_Attack(EventType.CHARACTER_ATTACK_EVT, self.attack))
+                # so sorry there's no attack animations
 
-        # stand for mving
-        if self.fsm.is_in_state(Character_State_Enum.STAND):
+        # stand for moving
+        elif self.fsm.is_in_state(Character_State_Enum.STAND):
             tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
 
             if not tile.marked:
@@ -569,6 +645,8 @@ class Character(EventObject):
                 self.team.lvl_map.init_a_star_open_list(s_x, s_y, t_x, t_y, start_tile)
                 #                print "Finding"
                 self.team.lvl_map.a_star_path_finding(t_x, t_y, tile)
+                start_tile.occupy = False
+                tile.occupy = True
                 path = deque()
                 while tile.parent_tile is not None:
                     #                    print "Path Coords: %s, %s" % (tile.pos_x, tile.pos_y)
@@ -619,6 +697,15 @@ class Character(EventObject):
 
     def get_pos(self):
         return self.pos_x, self.pos_y
+
+    def set_pos(self, x, y):
+        self.pos_x = x
+        self.pos_y = y
+        from Game import CGameApp
+        lvl_map = CGameApp.get_instance().level_map
+        tile = lvl_map.get_tile_by_coord(self.pos_x, self.pos_y)
+        tile.occupy = True
+        return
 
     def set_moving_target(self, x, y):
         self.moving_target_x = x
