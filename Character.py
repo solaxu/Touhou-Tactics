@@ -501,7 +501,7 @@ class Character(EventObject):
         self.intelligence = 1   # intelligence
         self.defense = 1        # defense
         self.resistance = 1     # resistance
-        self.attack = 1
+        self.attack = 2
         self.attack_range = 1   # physical attack range, will be not shown at character plane
 
         self.direction = Character_State_Enum.STAND
@@ -530,6 +530,8 @@ class Character(EventObject):
         self.fsm.add_state(Character_State_Skill(self.fsm))
 
         self.fsm.add_state(Character_State_Attacked(self.fsm))
+
+        self.fsm.add_state(Character_State_Dead(self.fsm))
 
         # add transitions
         '''
@@ -594,42 +596,47 @@ class Character(EventObject):
         return abs(ctx - tx) + abs(cty - ty)
 
     def handle_character_attacked(self, evt):
-        self.fsm.change_to_state(Character_State_Enum.ATTACKED)
-        dmg = evt.dmg - self.defense
+        dmg = evt.src_character.attack - self.defense
         self.hp -= dmg
+        evt.src_character.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
         if self.hp <= 0:
             self.fsm.change_to_state(Character_State_Enum.DEAD)
             from Game import CGameApp
             lvl_map = CGameApp.get_instance().level_map
             tile = lvl_map.get_tile_by_coord(self.pos_x, self.pos_y)
-            tile.marked = False
+            tile.occupy = False
+        else:
+            self.fsm.change_to_state(Character_State_Enum.ATTACKED)
 
     def handle_mouse_lbtn_down(self, evt):
         from Team import Team_Enum
 
         # attack
         if self.fsm.is_in_state(Character_State_Enum.ATTACK):
-            tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
-
             from Game import CGameApp
             app = CGameApp.get_instance()
             print "Do Attack and Play Attack Animations"
             self.team.lvl_map.reset_map()
             mouse_character = app.select_character_by_mouse(evt.mouse_pos)
+
             if mouse_character is not None:
                 rng = self.get_range(mouse_character.pos_x, mouse_character.pos_y)
-                if rng <= self.attack_range:
+                if mouse_character.name == self.name:
+                    self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+                elif rng <= self.attack_range:
                     print "Do Attack"
                     self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
-                    self.send_event(mouse_character, Event_Character_Attack(EventType.CHARACTER_ATTACK_EVT, self.attack))
+                    self.send_event(mouse_character, Event_Character_Attack(EventType.CHARACTER_ATTACK_EVT, self, mouse_character))
                 # so sorry there's no attack animations
+            else:
+                self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+
 
         # stand for moving
         elif self.fsm.is_in_state(Character_State_Enum.STAND):
             tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
 
             if not tile.marked:
-#                return
                 self.team.lvl_map.reset_map()
                 self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
                 self.team.fsm.change_to_state(Team_Enum.TEAM_NORMAL)

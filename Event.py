@@ -39,9 +39,16 @@ class Event(object):
 
 class Event_Character_Attack(Event):
 
-    def __init__(self, type, dmg):
+    def __init__(self, type, src_character, target_character):
         super(Event_Character_Attack, self).__init__(type)
-        self.dmg = dmg
+        self.src_character = src_character
+        self.target_character = target_character
+
+class Event_Character_Attacked(Event):
+
+    def __init__(self, type, src_character):
+        super(Event_Character_Attacked, self).__init__(type)
+        self.src_character = src_character
 
 
 class Event_Mouse_LBTN_DOWN(Event):

@@ -179,6 +179,56 @@ class LevelMap(EventObject):
                             tile.parent_tile = otile
 #                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
 
+    def bfs_travel_no_occupy(self, tile, color, step):
+        tile_queue = Queue.Queue()
+        tile_queue.put(tile)
+
+        while not tile_queue.empty():
+            tile = tile_queue.get()
+            tile.marked = True
+            tile.color = color
+            #            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+            if tile.H >= step:
+                continue
+
+            tile_i = self.get_tile_index(tile)
+
+            # left
+            left_ix = tile_i[0] - 1
+            left_iy = tile_i[1]
+            if left_ix > 0:
+                left_tile = self.get_tile_by_index(left_ix, left_iy)
+                if not left_tile.marked:
+                    left_tile.H = tile.H + 1
+                    tile_queue.put(left_tile)
+
+            # right
+            right_ix = tile_i[0] + 1
+            right_iy = tile_i[1]
+            if right_ix < (self.tile_rows - 1):
+                right_tile = self.get_tile_by_index(right_ix, right_iy)
+                if not right_tile.marked:
+                    right_tile.H = tile.H + 1
+                    tile_queue.put(right_tile)
+
+            # up
+            up_ix = tile_i[0]
+            up_iy = tile_i[1] - 1
+            if up_iy > 0:
+                up_tile = self.get_tile_by_index(up_ix, up_iy)
+                if not up_tile.marked:
+                    up_tile.H = tile.H + 1
+                    tile_queue.put(up_tile)
+
+            # down
+            down_ix = tile_i[0]
+            down_iy = tile_i[1] + 1
+            if down_iy < (self.tile_cols - 1):
+                down_tile = self.get_tile_by_index(down_ix, down_iy)
+                if not down_tile.marked:
+                    down_tile.H = tile.H + 1
+                    tile_queue.put(down_tile)
+
 
     def bfs_travel(self, tile, color, step):
         tile_queue = Queue.Queue()

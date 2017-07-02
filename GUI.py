@@ -465,7 +465,7 @@ class Character_Control_Menu(GuiWindow):
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
         tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x,
                                                app.cur_team.character_selected.pos_y)
-        app.level_map.bfs_travel(tile, (255, 0, 0, 196), app.cur_team.character_selected.attack_range)
+        app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_team.character_selected.attack_range)
 
     def set_pos(self, x, y):
         off_x = x - self.x
