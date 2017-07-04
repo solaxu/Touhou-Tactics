@@ -63,6 +63,11 @@ class Skill(object):
         self.anim = anim
         self.lvl = 1
         self.duration = 1
+        self.targets = []
+
+    def get_icon(self):
+        if self.anim is not None:
+            return self.anim.get_icon()
 
     def upgrade(self):
         pass
@@ -70,10 +75,9 @@ class Skill(object):
 
 class Skill_Single_Target(Skill):
 
-    def __init__(self, target, name, rng, dmg, buff, debuff, desc, anim):
+    def __init__(self, name, rng, dmg, buff, debuff, desc, anim):
         super(Skill_Single_Target, self).__init__(name, rng, dmg, buff, debuff, desc, anim)
         self.type = Skill_Enum.SINGLE_TARGET
-        self.target = target
 
 class Skill_AOE(Skill):
     
@@ -86,7 +90,7 @@ class Skill_AOE(Skill):
 #
 class Hakurei_Reimu_MuSouTenSei(Skill_Single_Target):
 
-    def __init__(self, target):
+    def __init__(self):
         super(Hakurei_Reimu_MuSouTenSei, self).__init__(
             "MuSouTenSei", 0, 0, Skill_Enum.BUFF_IMMORTAL,
             Skill_Enum.DEBUFF_NONE, "Lv: 1\nImmune skills and attacks.\nDuration: 2 turns",
@@ -100,7 +104,7 @@ class Hakurei_Reimu_MuSouTenSei(Skill_Single_Target):
 
 class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
 
-    def __init__(self, target):
+    def __init__(self):
         super(Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu, self).__init__(
             "MuGenNoKoSoKuKiGanSaTsu", 0, 0, Skill_Enum.BUFF_AP,
             Skill_Enum.DEBUFF_NONE, "Lv: 1\nGain more 3 action points\nDuration: 1 turn",
@@ -115,7 +119,7 @@ class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
 
 class Hakurei_Reimu_MuSoFuin(Skill_Single_Target):
 
-    def __init__(self, target):
+    def __init__(self):
         super(Hakurei_Reimu_MuSoFuin, self).__init__(
             "MuSoFuin", 4, 0, Skill_Enum.BUFF_NONE,
             Skill_Enum.DEBUFF_FUIN, "Lv: 1\nLock one target after 2 turns\nDuration 1 turn",
@@ -133,7 +137,7 @@ class Hakurei_Reimu_FuMaJin(Skill_AOE):
         super(Hakurei_Reimu_FuMaJin, self).__init__(
             "FuMaJin", 5, 0, Skill_Enum.BUFF_NONE,
             Skill_Enum.DEBUFF_FUIN, "Lv: 1\nLock targets in target area, ReiMu can not do actions\nDuration: 2 turns",
-            Skill_Anim_Drawer(Skill_Animations.FUMAJINkill)
+            Skill_Anim_Drawer(Skill_Animations.FUMAJIN), 2
         )
 
     def upgrade(self):

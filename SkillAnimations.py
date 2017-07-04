@@ -6,20 +6,24 @@ class Skill_Animation_Sheet(object):
 
     Frame_Time = 40
 
-    def __init__(self, tex_path, frame_w, frame_h, row_num, col_num, begin, end, anim_len):
+    def __init__(self, tex_path, frame_w, frame_h, row_num, col_num, begin, end, anim_len, icon_frame):
         self.frames = []
         self.frame_w = frame_w
         self.frame_h = frame_h
         self.anim_len = anim_len
         self.img = pygame.image.load(tex_path).convert_alpha()
         self.total_frames = end - begin + 1
+        self.icon_frame = icon_frame
         for i in range(0, row_num):
             for j in range(0, col_num):
                 if i * col_num + j >= self.total_frames:
+                    self.icon = pygame.transform.scale(self.frames[self.icon_frame], (48, 48))
                     return
                 sub_img = self.img.subsurface(j * self.frame_h, i * self.frame_w, self.frame_w, self.frame_h)
                 self.frames.append(sub_img)
 
+    def get_icon(self):
+        return self.icon
 
 class Skill_Anim_Drawer(EventObject):
 
@@ -32,6 +36,9 @@ class Skill_Anim_Drawer(EventObject):
 
     def stop(self):
         self.show = False
+
+    def get_icon(self):
+        return self.skill_anim_sheet.get_icon()
 
     def draw(self, et, pos, is_loop):
         if not self.show:
@@ -55,7 +62,15 @@ class Skill_Anim_Drawer(EventObject):
 
 class Skill_Animations(object):
 
-    IMMORTAL = Skill_Animation_Sheet("Media/skills/Immortal.jpg", 192, 192, 5, 4, 0, 16, 680)
-    AP_UP = Skill_Animation_Sheet("Media/skills/agi_ap_up.jpg", 192, 192, 5, 4, 0, 16, 680)
-    MUSOFUIN = Skill_Animation_Sheet("Media/skills/musofuin.jpg", 192, 192, 5, 3, 0, 13, 560)
-    FUMAJIN = Skill_Animation_Sheet("Media/skills/fumajin.jpg", 192, 192, 5, 3, 0, 11, 480)
+    IMMORTAL = None
+    AP_UP = None
+    MUSOFUIN = None
+    FUMAJIN = None
+
+    @staticmethod
+    def load_skill_res():
+        # Reimu
+        Skill_Animations.IMMORTAL = Skill_Animation_Sheet("Media/skills/Immortal.jpg", 192, 192, 4, 5, 0, 16, 680, 12)
+        Skill_Animations.AP_UP = Skill_Animation_Sheet("Media/skills/agi_ap_up.jpg", 192, 192, 4, 5, 0, 16, 680, 8)
+        Skill_Animations.MUSOFUIN = Skill_Animation_Sheet("Media/skills/musofuin.jpg", 192, 192, 3, 5, 0, 13, 560, 11)
+        Skill_Animations.FUMAJIN = Skill_Animation_Sheet("Media/skills/fumajin.jpg", 192, 192, 3, 5, 0, 11, 480, 9)

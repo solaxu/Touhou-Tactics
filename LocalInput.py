@@ -59,22 +59,32 @@ class LocalInput(EventObject):
                     LocalInput.get_instance().send_event(app, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN,
                                                                            LocalInput.mouse_pos))
             elif event.type == pygame.KEYDOWN and event.key == K_DOWN:
+                app.cur_team.send_event(app.cur_team,
+                                        Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
                 LocalInput.get_instance().send_event(CGameApp.get_instance(),
                                                      Event_Roll_Map(EventType.SCROLL_MAP,
                                                                            0, -36))
             elif event.type == pygame.KEYDOWN and event.key == K_UP:
+                app.cur_team.send_event(app.cur_team,
+                                        Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
                 LocalInput.get_instance().send_event(CGameApp.get_instance(),
                                                      Event_Roll_Map(EventType.SCROLL_MAP,
                                                                            0, 36))
             elif event.type == pygame.KEYDOWN and event.key == K_LEFT:
+                app.cur_team.send_event(app.cur_team,
+                                        Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
                 LocalInput.get_instance().send_event(CGameApp.get_instance(),
                                                      Event_Roll_Map(EventType.SCROLL_MAP,
                                                                            36, 0))
             elif event.type == pygame.KEYDOWN and event.key == K_RIGHT:
+                app.cur_team.send_event(app.cur_team,
+                                        Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
                 LocalInput.get_instance().send_event(CGameApp.get_instance(),
                                                      Event_Roll_Map(EventType.SCROLL_MAP,
                                                                            -36, 0))
             elif event.type == pygame.KEYDOWN and event.key == K_m:
+                app.cur_team.send_event(app.cur_team,
+                                        Event_Mouse_RBTN_DOWN(EventType.MOUSE_RBTN_DOWN, LocalInput.mouse_pos))
                 LocalInput.get_instance().send_event(CGameApp.get_instance().level_map,
                                                      Event_Switch_MiniMap(EventType.SWITCH_MINI_MAP))
 

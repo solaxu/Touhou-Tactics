@@ -483,6 +483,7 @@ class Character(EventObject):
         self.sprite_sheet = sprite_sheet
         self.team = team
         self.selected = False
+        self.skills = []
         team.add_character(self)
 
         # property for test
@@ -594,6 +595,9 @@ class Character(EventObject):
         cty = self.pos_y / app.level_map.tile_height
 
         return abs(ctx - tx) + abs(cty - ty)
+
+    def add_skill(self, skill):
+        self.skills.append(skill)
 
     def handle_character_attacked(self, evt):
         dmg = evt.src_character.attack - self.defense

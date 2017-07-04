@@ -12,6 +12,7 @@ from Map import *
 from LocalInput import *
 from pygame.font import *
 from GUI import GuiManager
+from Skill import *
 
 class CGameApp(EventObject):
     
@@ -36,6 +37,7 @@ class CGameApp(EventObject):
 
     def create(self):
         self.gui_manager = GuiManager()
+        Skill_Animations.load_skill_res()
         # test character
         hakurei_reimu_sprite_sheet = Sprite_Sheet("Media/walkings/博丽灵梦1.png", 36, 36, 4, 4)
         kirisame_marisa_sprite_sheet = Sprite_Sheet("Media/walkings/雾雨魔理沙1.png", 36, 36, 4, 4)
@@ -49,6 +51,11 @@ class CGameApp(EventObject):
 
         hakurei_reimu = Character("Hakurei Reimu", hakurei_reimu_sprite_sheet, self.team_red)
         hakurei_reimu.set_picture("Media/characters/博丽灵梦.png")
+        hakurei_reimu.add_skill(Hakurei_Reimu_MuSouTenSei())
+        hakurei_reimu.add_skill(Hakurei_Reimu_MuSoFuin())
+        hakurei_reimu.add_skill(Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu())
+        hakurei_reimu.add_skill(Hakurei_Reimu_FuMaJin())
+
 
         kirisame_marisa = Character("Kirisame Marisa", kirisame_marisa_sprite_sheet, self.team_blue)
         kirisame_marisa.set_picture("Media/characters/雾雨魔理沙.png")

@@ -10,6 +10,7 @@ class Gui_Enum(Enum):
     WND_BORDER_WIDTH = 2
     Character_Plane = 10000
     Character_Control_Menu = 10001
+    Character_Skill_Item_Menu = 10002
 
 class GuiElement(EventObject):
 
@@ -108,6 +109,9 @@ class GuiButton(GuiElement):
             pygame.draw.rect(app.screen, (0, 255, 0), (self.x, self.y, self.w, self.h), Gui_Enum.WND_BORDER_WIDTH.value)
         self.process_evt_queue()
 
+    def set_picture(self, pic):
+        self.surface = pic
+
     def handle_click(self, evt):
         print str(self.name) + " Button Pressed"
         from Game import CGameApp
@@ -135,6 +139,17 @@ class GuiWindow(EventObject):
         # register handlers
         self.add_handler(EventType.GUI_BTN_PRESSED, self.handle_gui_button_down)
         self.add_handler(EventType.GUI_MOUSE_HOVER, self.handle_gui_mouse_hover)
+
+    def set_pos(self, x, y):
+        off_x = x - self.x
+        off_y = y - self.y
+
+        self.x += off_x
+        self.y += off_y
+
+        for (name, widget) in self.widgets.items():
+            widget.x += off_x
+            widget.y += off_y
 
     def add_widget(self, widget):
         self.widgets[widget.name] = widget
@@ -190,6 +205,8 @@ class GuiManager(EventObject):
         self.gui_wnds[character_plane.name] = character_plane
         character_menu = Character_Control_Menu()
         self.gui_wnds[character_menu.name] = character_menu
+        skill_slots = Character_Skill_Item_Menu()
+        self.gui_wnds[skill_slots.name] = skill_slots
 
     def get_wnd_by_mouse(self, mouse_pos):
         from Map import QuadTreeForTile
@@ -228,6 +245,8 @@ class GuiManager(EventObject):
             if evt.character.team.name == app.cur_team.name:
                 x = evt.character.pos_x + 18
                 y = evt.character.pos_y + 18
+                x += app.offset_x
+                y += app.offset_y
                 self.gui_wnds[Gui_Enum.Character_Control_Menu].set_pos(x, y)
                 self.gui_wnds[Gui_Enum.Character_Control_Menu].show = True
         return
@@ -237,6 +256,7 @@ class GuiManager(EventObject):
         #cur_team = CGameApp.get_instance().cur_team
         #if cur_team is not None and cur_team.character_selected is not None:
         self.gui_wnds[Gui_Enum.Character_Control_Menu].show = False
+        self.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].show = False
         return
 
 
@@ -453,8 +473,16 @@ class Character_Control_Menu(GuiWindow):
     def handle_item_btn(self):
         print "Select Item"
 
+
     def handle_skill_btn(self):
         print "Select Skill"
+        if self.show:
+            from Game import CGameApp
+            gui_mgr = CGameApp.get_instance().gui_manager
+            cur_team = CGameApp.get_instance().cur_team
+            gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].show = True
+            gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].link_to_character(cur_team.character_selected)
+            gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].set_pos(self.x + self.w, self.y)
 
     def handle_move_btn(self):
         print "Handle Move Btn"
@@ -474,17 +502,133 @@ class Character_Control_Menu(GuiWindow):
         tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x,
                                                app.cur_team.character_selected.pos_y)
         app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_team.character_selected.attack_range)
-
-    def set_pos(self, x, y):
-        off_x = x - self.x
-        off_y = y - self.y
-
-        self.x += off_x
-        self.y += off_y
-
-        for (name, widget) in self.widgets.items():
-            widget.x += off_x
-            widget.y += off_y
             
     def draw(self, et):
         super(Character_Control_Menu, self).draw(et)
+
+
+# skill items
+class Character_Skill_Slots_Enum(Enum):
+
+    Skill_BTN_1 = 0
+    Skill_BTN_2 = 1
+    Skill_BTN_3 = 2
+    Skill_BTN_4 = 3
+    Skill_DESC_1 = 4
+    Skill_DESC_2 = 5
+    Skill_DESC_3 = 6
+    Skill_DESC_4 = 7
+    Skill_LV_UP_BTN_1 = 8
+    Skill_LV_UP_BTN_2 = 9
+    Skill_LV_UP_BTN_3 = 10
+    Skill_LV_UP_BTN_4 = 11
+    SLOT_SIZE = 48
+    WIDTH = 52      # 48 + 2 * 2
+    HEIGHT = 196    # 48 * 4 + 2 * 2
+
+class Character_Skill_Item_Menu(GuiWindow):
+
+    def __init__(self):
+        super(Character_Skill_Item_Menu, self).__init__(Gui_Enum.Character_Skill_Item_Menu,
+                                                        300, 0,
+                                                        Character_Skill_Slots_Enum.WIDTH.value,
+                                                        Character_Skill_Slots_Enum.HEIGHT.value)
+
+        self.show = False
+
+        self.skill_btn_1 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_BTN_1, 302, 2,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "", (255, 255, 255), self))
+
+        self.skill_btn_2 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_BTN_2,
+                                                     self.skill_btn_1.x,
+                                                     self.skill_btn_1.y + self.skill_btn_1.h,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "", (255, 255, 255), self))
+
+        self.skill_btn_3 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_BTN_3,
+                                                     self.skill_btn_2.x,
+                                                     self.skill_btn_2.y + self.skill_btn_2.h,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "", (255, 255, 255), self))
+
+        self.skill_btn_4 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_BTN_4,
+                                                     self.skill_btn_3.x,
+                                                     self.skill_btn_3.y + self.skill_btn_3.h,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "", (255, 255, 255), self))
+
+        self.skill_lvl_btn_1 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_1,
+                                                         self.skill_btn_1.x + self.skill_btn_1.w,
+                                                         self.skill_btn_1.y,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+
+        self.skill_lvl_btn_2 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_2,
+                                                         self.skill_lvl_btn_1.x,
+                                                         self.skill_lvl_btn_1.y + self.skill_lvl_btn_1.h,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+
+        self.skill_lvl_btn_3 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_3,
+                                                         self.skill_lvl_btn_2.x,
+                                                         self.skill_lvl_btn_2.y + self.skill_lvl_btn_2.h,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+
+        self.skill_lvl_btn_4 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_4,
+                                                         self.skill_lvl_btn_3.x,
+                                                         self.skill_lvl_btn_3.y + self.skill_lvl_btn_3.h,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+
+        self.skill_desc_1 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_1,
+                                                     self.skill_lvl_btn_1.x,
+                                                     self.skill_lvl_btn_1.y,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+
+        self.skill_desc_2 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_2,
+                                                     self.skill_lvl_btn_2.x,
+                                                     self.skill_lvl_btn_2.y,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+
+        self.skill_desc_3 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_3,
+                                                     self.skill_lvl_btn_3.x,
+                                                     self.skill_lvl_btn_3.y,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+
+        self.skill_desc_4 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_4,
+                                                     self.skill_lvl_btn_4.x,
+                                                     self.skill_lvl_btn_4.y,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     Character_Skill_Slots_Enum.SLOT_SIZE.value,
+                                                     (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+
+    def draw(self, et):
+        super(Character_Skill_Item_Menu, self).draw(et)
+
+    def link_to_character(self, character):
+        if character is not None:
+            self.skill_btn_1.set_picture(character.skills[0].get_icon())
+            self.skill_btn_2.set_picture(character.skills[1].get_icon())
+            self.skill_btn_3.set_picture(character.skills[2].get_icon())
+            self.skill_btn_4.set_picture(character.skills[3].get_icon())
+
+            self.skill_desc_1.set_text(character.skills[0].desc, (255, 255, 255))
+            self.skill_desc_2.set_text(character.skills[1].desc, (255, 255, 255))
+            self.skill_desc_3.set_text(character.skills[2].desc, (255, 255, 255))
+            self.skill_desc_4.set_text(character.skills[3].desc, (255, 255, 255))
