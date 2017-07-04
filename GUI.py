@@ -447,6 +447,14 @@ class Character_Control_Menu(GuiWindow):
         # new handlers
         self.add_widget_handlers(Character_Control_Enum.MOVE_BTN, self.handle_move_btn)
         self.add_widget_handlers(Character_Control_Enum.ATTACK_BTN, self.handle_attack_btn)
+        self.add_widget_handlers(Character_Control_Enum.ITEM_BTN, self.handle_item_btn)
+        self.add_widget_handlers(Character_Control_Enum.SKILL_BTN, self.handle_skill_btn)
+
+    def handle_item_btn(self):
+        print "Select Item"
+
+    def handle_skill_btn(self):
+        print "Select Skill"
 
     def handle_move_btn(self):
         print "Handle Move Btn"

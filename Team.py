@@ -79,6 +79,7 @@ class Team(EventObject):
         self.character_selected = None
         self.fog_of_war = []
         self.characters = {}
+        self.dead_characters = {}
 
         # add states
         self.fsm.add_state(Team_State_Normal(self.fsm))
@@ -145,6 +146,8 @@ class Team(EventObject):
         app = CGameApp.get_instance()
         self.lvl_map.reset_map()
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
+        if self.character_selected is not None:
+            self.character_selected.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
 
     def handle_mouse_lbtn_down(self, evt):
         from LocalInput import LocalInput

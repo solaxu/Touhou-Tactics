@@ -605,6 +605,8 @@ class Character(EventObject):
             lvl_map = CGameApp.get_instance().level_map
             tile = lvl_map.get_tile_by_coord(self.pos_x, self.pos_y)
             tile.occupy = False
+            self.team.dead_characters[self.name] = self
+            del self.team.characters[self.name]
         else:
             self.fsm.change_to_state(Character_State_Enum.ATTACKED)
 
