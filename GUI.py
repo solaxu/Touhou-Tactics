@@ -23,6 +23,7 @@ class GuiElement(EventObject):
         self.y = y
         self.w = w
         self.h = h
+        self.color = color
         self.alpha = alpha
         self.surface = pygame.Surface([w, h])
         self.surface.fill(color)
@@ -32,10 +33,22 @@ class GuiElement(EventObject):
     def set_background_surface(self, surface):
         self.surface = surface
 
+    def adjust_text_surface(self):
+        text_w = self.text_surface.get_width()
+        text_h = self.text_surface.get_height()
+        if text_w >= self.w:
+            self.w = text_w + 4
+        if text_h >= self.h:
+            self.h = text_h + 4
+        self.surface = pygame.Surface([self.w, self.h])
+        self.surface.fill(self.color)
+        self.surface.set_alpha(self.alpha)
+
     def set_text(self, text, color):
         from Game import CGameApp
         app = CGameApp.get_instance()
         self.text_surface = app.font.render(text, False, color)
+        self.adjust_text_surface()
 
 
 class GuiPicture(EventObject):
@@ -69,6 +82,7 @@ class GuiLabel(GuiElement):
         from Game import CGameApp
         app = CGameApp.get_instance()
         self.text_surface = app.font.render(text, False, text_color)
+        self.adjust_text_surface()
 
     def draw(self, et):
         from Game import CGameApp
@@ -79,6 +93,7 @@ class GuiLabel(GuiElement):
         off_x = (self.w - text_w) / 2
         off_y = (self.h - text_h) / 2
         app.screen.blit(self.text_surface, ((self.x + off_x, self.y + off_y), (text_w, text_h)))
+        pygame.draw.rect(app.screen, (255, 0, 255), (self.x, self.y, self.w, self.h), 1)
 
         self.process_evt_queue()
 
@@ -90,7 +105,7 @@ class GuiButton(GuiElement):
         from Game import CGameApp
         app = CGameApp.get_instance()
         self.text_surface = app.font.render(text, False, text_color)
-
+        self.desc = None
         # register handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_click)
 
@@ -103,10 +118,17 @@ class GuiButton(GuiElement):
         off_x = (self.w - text_w) / 2
         off_y = (self.h - text_h) / 2
         app.screen.blit(self.text_surface, ((self.x + off_x, self.y + off_y), (text_w, text_h)))
+        pygame.draw.rect(app.screen, (128, 128, 128), (self.x, self.y, self.w, self.h), Gui_Enum.WND_BORDER_WIDTH.value)
         from LocalInput import LocalInput
         from Map import QuadTreeForTile
         if QuadTreeForTile.check_tile(self.x, self.y, self.w, self.h, LocalInput.mouse_pos[0], LocalInput.mouse_pos[1], 0, 0):
             pygame.draw.rect(app.screen, (0, 255, 0), (self.x, self.y, self.w, self.h), Gui_Enum.WND_BORDER_WIDTH.value)
+            if self.desc is not None:
+                self.desc.show = True
+        else:
+            if self.desc is not None:
+                self.desc.show = False
+
         self.process_evt_queue()
 
     def set_picture(self, pic):
@@ -563,32 +585,37 @@ class Character_Skill_Item_Menu(GuiWindow):
                                                      (0, 0, 0), 255, "", (255, 255, 255), self))
 
         self.skill_lvl_btn_1 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_1,
-                                                         self.skill_btn_1.x + self.skill_btn_1.w,
+                                                         self.skill_btn_1.x + Character_Skill_Slots_Enum.WIDTH.value,
                                                          self.skill_btn_1.y,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
-                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+                                                         (0, 0, 0), 255, "LvlUp", (255, 255, 255), self))
+        self.skill_lvl_btn_1.show = False
 
         self.skill_lvl_btn_2 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_2,
                                                          self.skill_lvl_btn_1.x,
                                                          self.skill_lvl_btn_1.y + self.skill_lvl_btn_1.h,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
-                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+                                                         (0, 0, 0), 255, "LvlUp", (255, 255, 255), self))
+
+        self.skill_lvl_btn_2.show = False
 
         self.skill_lvl_btn_3 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_3,
                                                          self.skill_lvl_btn_2.x,
                                                          self.skill_lvl_btn_2.y + self.skill_lvl_btn_2.h,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
-                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+                                                         (0, 0, 0), 255, "LvlUp", (255, 255, 255), self))
+        self.skill_lvl_btn_3.show = False
 
         self.skill_lvl_btn_4 = self.add_widget(GuiButton(Character_Skill_Slots_Enum.Skill_LV_UP_BTN_4,
                                                          self.skill_lvl_btn_3.x,
                                                          self.skill_lvl_btn_3.y + self.skill_lvl_btn_3.h,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                          Character_Skill_Slots_Enum.SLOT_SIZE.value,
-                                                         (0, 0, 0), 255, "lvUp", (255, 255, 255), self))
+                                                         (0, 0, 0), 255, "LvlUp", (255, 255, 255), self))
+        self.skill_lvl_btn_4.show = False
 
         self.skill_desc_1 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_1,
                                                      self.skill_lvl_btn_1.x,
@@ -596,6 +623,8 @@ class Character_Skill_Item_Menu(GuiWindow):
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+        self.skill_btn_1.desc = self.skill_desc_1
+        self.skill_desc_1.show = False
 
         self.skill_desc_2 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_2,
                                                      self.skill_lvl_btn_2.x,
@@ -603,6 +632,8 @@ class Character_Skill_Item_Menu(GuiWindow):
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+        self.skill_btn_2.desc = self.skill_desc_2
+        self.skill_desc_2.show = False
 
         self.skill_desc_3 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_3,
                                                      self.skill_lvl_btn_3.x,
@@ -610,6 +641,8 @@ class Character_Skill_Item_Menu(GuiWindow):
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+        self.skill_btn_3.desc = self.skill_desc_3
+        self.skill_desc_3.show = False
 
         self.skill_desc_4 = self.add_widget(GuiLabel(Character_Skill_Slots_Enum.Skill_DESC_4,
                                                      self.skill_lvl_btn_4.x,
@@ -617,6 +650,8 @@ class Character_Skill_Item_Menu(GuiWindow):
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      Character_Skill_Slots_Enum.SLOT_SIZE.value,
                                                      (0, 0, 0), 255, "Desc", (255, 255, 255), self))
+        self.skill_btn_4.desc = self.skill_desc_4
+        self.skill_desc_4.show = False
 
     def draw(self, et):
         super(Character_Skill_Item_Menu, self).draw(et)
