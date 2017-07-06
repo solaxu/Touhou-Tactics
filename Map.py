@@ -28,6 +28,7 @@ class LevelMap(EventObject):
         self.tile_sets = {}
         self.tile_imgs = {}
         self.tiles = []
+        self.skilled_tiles = []
         self.quad_root = None
         self.render_quads = []
         self.mini_map_show = False
@@ -65,13 +66,19 @@ class LevelMap(EventObject):
             for tile in quad.tiles:
                 tile.reset()
 
+    def reset_skill_map(self):
+        self.skilled_tiles = []
+        for quad in self.render_quads:
+            for tile in quad.tiles:
+                tile.skill_marked = False
+                tile.skill_step = 0
+
     def select_tile_by_mouse(self, mouse_pos):
         from Game import CGameApp
         app = CGameApp.get_instance()
         x = mouse_pos[0] - int(app.offset_x)
         y = mouse_pos[1] - int(app.offset_y)
         return self.get_tile_by_coord(x, y)
-
 
     def init_a_star_open_list(self, c_x, c_y, t_x, t_y, start_tile):
         self.open_list = Queue.PriorityQueue()
@@ -179,6 +186,59 @@ class LevelMap(EventObject):
                             tile.parent_tile = otile
 #                    print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
 
+#   神TM三个bfs……踩得坑不够多. f**king 3 bfs functions...
+
+    def bfs_travel_skill(self, tile, color, step):
+        tile_queue = Queue.Queue()
+        tile_queue.put(tile)
+
+        while not tile_queue.empty():
+            tile = tile_queue.get()
+            tile.skill_marked = True
+            tile.draw_skill_rect(color)
+            self.skilled_tiles.append(tile)
+            #            print "Tile info: H %s G %s Pos_x %s Pos_y %s" % (tile.H, tile.G, tile.pos_x, tile.pos_y)
+            if tile.skill_step >= step:
+                continue
+
+            tile_i = self.get_tile_index(tile)
+
+            # left
+            left_ix = tile_i[0] - 1
+            left_iy = tile_i[1]
+            if left_ix > 0:
+                left_tile = self.get_tile_by_index(left_ix, left_iy)
+                if not left_tile.skill_marked:
+                    left_tile.skill_step = tile.skill_step + 1
+                    tile_queue.put(left_tile)
+
+            # right
+            right_ix = tile_i[0] + 1
+            right_iy = tile_i[1]
+            if right_ix < (self.tile_rows - 1):
+                right_tile = self.get_tile_by_index(right_ix, right_iy)
+                if not right_tile.skill_marked:
+                    right_tile.skill_step = tile.skill_step + 1
+                    tile_queue.put(right_tile)
+
+            # up
+            up_ix = tile_i[0]
+            up_iy = tile_i[1] - 1
+            if up_iy > 0:
+                up_tile = self.get_tile_by_index(up_ix, up_iy)
+                if not up_tile.skill_marked:
+                    up_tile.skill_step = tile.skill_step + 1
+                    tile_queue.put(up_tile)
+
+            # down
+            down_ix = tile_i[0]
+            down_iy = tile_i[1] + 1
+            if down_iy < (self.tile_cols - 1):
+                down_tile = self.get_tile_by_index(down_ix, down_iy)
+                if not down_tile.skill_marked:
+                    down_tile.skill_step = tile.skill_step + 1
+                    tile_queue.put(down_tile)
+
     def bfs_travel_no_occupy(self, tile, color, step):
         tile_queue = Queue.Queue()
         tile_queue.put(tile)
@@ -228,7 +288,6 @@ class LevelMap(EventObject):
                 if not down_tile.marked:
                     down_tile.H = tile.H + 1
                     tile_queue.put(down_tile)
-
 
     def bfs_travel(self, tile, color, step):
         tile_queue = Queue.Queue()

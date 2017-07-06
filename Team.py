@@ -104,6 +104,13 @@ class Team(EventObject):
     def mist_map(self):
         return
 
+    def select_character_by_coord(self, x, y):
+        for (name, character) in self.characters.items():
+            if QuadTreeForTile.check_tile(character.pos_x, character.pos_y,
+            Prototype_Map_Enum.TILE_WIDTH.value - 1, Prototype_Map_Enum.TILE_HEIGHT.value - 1, x, y, 0, 0):
+                return character
+        return None
+
     def select_character_by_mouse(self, mouse_pos):
         from Game import CGameApp
         app = CGameApp.get_instance()
@@ -112,7 +119,7 @@ class Team(EventObject):
 
         for (name, character) in self.characters.items():
             if QuadTreeForTile.check_tile(character.pos_x, character.pos_y,
-            Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value, x, y, 0, 0):
+            Prototype_Map_Enum.TILE_WIDTH.value - 1, Prototype_Map_Enum.TILE_HEIGHT.value - 1, x, y, 0, 0):
                 return character
         return None
 

@@ -57,6 +57,7 @@ class Skill(object):
         self.name = name
         self.dmg = dmg
         self.rng = rng
+        self.aoe_rng = 0
         self.buff = buff
         self.debuff = debuff
         self.desc = desc
@@ -68,6 +69,9 @@ class Skill(object):
     def get_icon(self):
         if self.anim is not None:
             return self.anim.get_icon()
+
+    def emit(self, enemies, allies):
+        print "Emit Skill"
 
     def upgrade(self):
         pass
@@ -93,13 +97,13 @@ class Hakurei_Reimu_MuSouTenSei(Skill_Single_Target):
     def __init__(self):
         super(Hakurei_Reimu_MuSouTenSei, self).__init__(
             "MuSouTenSei", 0, 0, Skill_Enum.BUFF_IMMORTAL,
-            Skill_Enum.DEBUFF_NONE, "Lv: 1\nImmune skills and attacks.\nDuration: 2 turns",
+            Skill_Enum.DEBUFF_NONE, "MuSouTenSei, Lv: 1. Immune skills and attacks. Duration: 2 turns",
             Skill_Anim_Drawer(Skill_Animations.IMMORTAL))
 
     def upgrade(self):
         self.lvl += 1
         self.duration = self.lvl + 1
-        self.desc = "Lv: %s\n Immune skills and attacks\nDuration: %s turns" % (self.lvl, self.duration)
+        self.desc = "MuSouTenSei, Lv: %s. Immune skills and attacks. Duration: %s turns" % (self.lvl, self.duration)
 
 
 class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
@@ -107,7 +111,7 @@ class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
     def __init__(self):
         super(Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu, self).__init__(
             "MuGenNoKoSoKuKiGanSaTsu", 0, 0, Skill_Enum.BUFF_AP,
-            Skill_Enum.DEBUFF_NONE, "Lv: 1\nGain more 3 action points\nDuration: 1 turn",
+            Skill_Enum.DEBUFF_NONE, "MuGenNoKoSoKuKiGanSaTsu, Lv: 1. Gain more 3 action points. Duration: 1 turn",
             Skill_Anim_Drawer(Skill_Animations.AP_UP)
         )
         self.ap_buff = 3
@@ -115,32 +119,32 @@ class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
     def upgrade(self):
         self.lvl += 1
         self.ap_buff += 1
-        self.desc = "Lv: %s\nGain more %s action points\nDuration: 1 turn" % (self.lvl, self.ap_buff)
+        self.desc = "MuGenNoKoSoKuKiGanSaTsu, Lv: %s. Gain more %s action points. Duration: 1 turn" % (self.lvl, self.ap_buff)
 
 class Hakurei_Reimu_MuSoFuin(Skill_Single_Target):
 
     def __init__(self):
         super(Hakurei_Reimu_MuSoFuin, self).__init__(
             "MuSoFuin", 4, 0, Skill_Enum.BUFF_NONE,
-            Skill_Enum.DEBUFF_FUIN, "Lv: 1\nLock one target after 2 turns\nDuration 1 turn",
+            Skill_Enum.DEBUFF_FUIN, "MuSoFuin, Lv: 1. Lock one target after 2 turns. Duration 1 turn",
             Skill_Anim_Drawer(Skill_Animations.MUSOFUIN)
         )
 
     def upgrade(self):
         self.lvl += 1
         self.duration += 1
-        self.desc = "Lv: %s\n Lock one target after 2 turns\nDuration: %s turns" % (self.lvl, self.duration)
+        self.desc = "MuSoFuin, Lv: %s. Lock one target after 2 turns. Duration: %s turns" % (self.lvl, self.duration)
 
 class Hakurei_Reimu_FuMaJin(Skill_AOE):
 
     def __init__(self):
         super(Hakurei_Reimu_FuMaJin, self).__init__(
             "FuMaJin", 5, 0, Skill_Enum.BUFF_NONE,
-            Skill_Enum.DEBUFF_FUIN, "Lv: 1\nLock targets in target area, ReiMu can not do actions\nDuration: 2 turns",
-            Skill_Anim_Drawer(Skill_Animations.FUMAJIN), 2
+            Skill_Enum.DEBUFF_FUIN, "FuMaJin, Lv: 1. Lock targets in target area, ReiMu can not do actions. Duration: 2 turns",
+            Skill_Anim_Drawer(Skill_Animations.FUMAJIN), 1
         )
 
     def upgrade(self):
         self.lvl += 1
         self.duration += 1
-        self.desc = "Lv: %s\nLock targets in target area, ReiMu can not do actions\nDuration: %s turns" % (self.lvl, self.duration)
+        self.desc = "FuMaJin, Lv: %s. Lock targets in target area, ReiMu can not do actions. Duration: %s turns" % (self.lvl, self.duration)

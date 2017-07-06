@@ -17,8 +17,9 @@ class Character_State_Enum(Enum):
     DEAD = 6        # Undo
     ATTACK = 7      # Doing
     ITEM = 8        # Undo
-    SKILL = 9       # Undo
-    ATTACKED = 10   # Doing
+    SKILL = 9       # Doing
+    ATTACKED = 10   # Done
+    SKILL_TARGET_SEARCH = 11    # Doing
     MOVE_TRANSITION = 100     # Done
     DIE_TRANSITION = 100      # Done
 
@@ -146,13 +147,53 @@ class Character_State_Stand(FSM_State):
         character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = False
         print self.fsm.owner.name + " exit state " + str(self.sn)
 
+# Skill Target Search
+class Character_State_Skill_Target_Search(FSM_State):
+    def __init__(self, fsm):
+        super(Character_State_Skill_Target_Search, self).__init__(fsm)
+        self.sn = Character_State_Enum.SKILL_TARGET_SEARCH
+
+    def enter(self):
+        super(Character_State_Skill_Target_Search, self).enter()
+        character = self.fsm.owner
+        character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = True
+        print self.fsm.owner.name + " enter state " + str(self.sn)
+
+    def update(self, et):
+        super(Character_State_Skill_Target_Search, self).update(et)
+        if not self.fsm.owner.command_queue.empty():
+            self.fsm.owner.direction = self.fsm.owner.command_queue.get()
+        if self.fsm.owner.pos_x == self.fsm.owner.moving_target_x and self.fsm.owner.pos_y == self.fsm.owner.moving_target_y:
+            self.fsm.owner.send_event(self.fsm.owner.team, Event_Character_Stop_Moving(EventType.CHARACTER_STOP_MOVING))
+            self.fsm.owner.moving_target_x = 0
+            self.fsm.owner.moving_target_y = 0
+
+    def draw(self, et):
+        super(Character_State_Skill_Target_Search, self).draw(et)
+        self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
+        from Game import CGameApp
+        from LocalInput import LocalInput
+        app = CGameApp.get_instance()
+        map = app.level_map
+        tile = map.select_tile_by_mouse(LocalInput.mouse_pos)
+        map.reset_skill_map()
+        if tile is not None and tile.marked:
+            map.bfs_travel_skill(tile, (255, 0, 0), self.fsm.owner.cur_skill.aoe_rng)
+
+
+    def exit(self):
+        super(Character_State_Skill_Target_Search, self).exit()
+        character = self.fsm.owner
+        character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = False
+        print self.fsm.owner.name + " exit state " + str(self.sn)
+
 # MOVE state
 class Character_State_Move(FSM_State):
-    
+
     def __init__(self, fsm):
         super(Character_State_Move, self).__init__(fsm)
         self.sn = Character_State_Enum.MOVE
-    
+
     def enter(self):
         super(Character_State_Move, self).enter()
         # print self.fsm.owner.name + " enter state " + str(self.sn)
@@ -161,7 +202,7 @@ class Character_State_Move(FSM_State):
         super(Character_State_Move, self).update(et)
         if not self.fsm.owner.command_queue.empty():
             self.fsm.owner.direction = self.fsm.owner.command_queue.get()
-    
+
     def draw(self, et):
         super(Character_State_Move, self).draw(et)
         self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
@@ -172,14 +213,14 @@ class Character_State_Move(FSM_State):
 
 # MOVE_RIGHT state
 class Character_State_Move_Right(FSM_State):
-    
+
     def __init__(self, fsm):
         super(Character_State_Move_Right, self).__init__(fsm)
         self.sn = Character_State_Enum.MOVE_RIGHT
         self.frame_num = 0
         self.acc_time = 0
         self.offset = 0
-    
+
     def enter(self):
         super(Character_State_Move_Right, self).enter()
         # print self.fsm.owner.name + " enter state " + str(self.sn)
@@ -196,7 +237,7 @@ class Character_State_Move_Right(FSM_State):
             self.offset = 0
             if not self.fsm.owner.command_queue.empty():
                 self.fsm.owner.direction = self.fsm.owner.command_queue.get()
-        
+
     def draw(self, et):
         super(Character_State_Move_Right, self).draw(et)
         frame_index = self.frame_num % Character_Move_Frame.DIRECTION_FRAME_NUM.value + Character_Move_Frame.MOVE_RIGHT_BEGIN.value
@@ -209,14 +250,14 @@ class Character_State_Move_Right(FSM_State):
 
 # MOVE_LEFT state, a sub-state of MOVE
 class Character_State_Move_Left(FSM_State):
-    
+
     def __init__(self, fsm):
         super(Character_State_Move_Left, self).__init__(fsm)
         self.sn = Character_State_Enum.MOVE_LEFT
         self.frame_num = 0
         self.acc_time = 0
         self.offset = 0
-    
+
     def enter(self):
         super(Character_State_Move_Left, self).enter()
         # print self.fsm.owner.name + " enter state " + str(self.sn)
@@ -233,7 +274,7 @@ class Character_State_Move_Left(FSM_State):
             self.offset = 0
             if not self.fsm.owner.command_queue.empty():
                 self.fsm.owner.direction = self.fsm.owner.command_queue.get()
-    
+
     def draw(self, et):
         super(Character_State_Move_Left, self).draw(et)
         frame_index = self.frame_num % Character_Move_Frame.DIRECTION_FRAME_NUM.value + Character_Move_Frame.MOVE_LEFT_BEGIN.value
@@ -245,14 +286,14 @@ class Character_State_Move_Left(FSM_State):
 
 # MOVE_UP state, a sub-state of MOVE
 class Character_State_Move_Up(FSM_State):
-    
+
     def __init__(self, fsm):
         super(Character_State_Move_Up, self).__init__(fsm)
         self.sn = Character_State_Enum.MOVE_UP
         self.frame_num = 0
         self.acc_time = 0
         self.offset = 0
-    
+
     def enter(self):
         super(Character_State_Move_Up, self).enter()
         # print self.fsm.owner.name + " enter state " + str(self.sn)
@@ -269,7 +310,7 @@ class Character_State_Move_Up(FSM_State):
             self.offset = 0
             if not self.fsm.owner.command_queue.empty():
                 self.fsm.owner.direction = self.fsm.owner.command_queue.get()
-    
+
     def draw(self, et):
         super(Character_State_Move_Up, self).draw(et)
         frame_index = self.frame_num % Character_Move_Frame.DIRECTION_FRAME_NUM.value + Character_Move_Frame.MOVE_UP_BEGIN.value
@@ -281,14 +322,14 @@ class Character_State_Move_Up(FSM_State):
 
 # MOVE_DOWN state, a sub-state of MOVE
 class Character_State_Move_Down(FSM_State):
-    
+
     def __init__(self, fsm):
         super(Character_State_Move_Down, self).__init__(fsm)
         self.sn = Character_State_Enum.MOVE_DOWN
         self.frame_num = 0
         self.acc_time = 0
         self.offset = 0
-    
+
     def enter(self):
         super(Character_State_Move_Down, self).enter()
         # print self.fsm.owner.name + " enter state " + str(self.sn)
@@ -305,7 +346,7 @@ class Character_State_Move_Down(FSM_State):
             self.offset = 0
             if not self.fsm.owner.command_queue.empty():
                 self.fsm.owner.direction = self.fsm.owner.command_queue.get()
-    
+
     def draw(self, et):
         super(Character_State_Move_Down, self).draw(et)
         frame_index = self.frame_num % Character_Move_Frame.DIRECTION_FRAME_NUM.value + Character_Move_Frame.MOVE_DOWN_BEGIN.value
@@ -398,6 +439,7 @@ class Character_State_Item(FSM_State):
 
     def draw(self, et):
         super(Character_State_Item, self).draw(et)
+        self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
 
     def exit(self):
         super(Character_State_Item, self).exit()
@@ -416,7 +458,7 @@ class Character_State_Skill(FSM_State):
         print self.fsm.owner.name + " enter state " + str(self.sn)
 
     def update(self, et):
-        super(Character_State_Item, self).update(et)
+        super(Character_State_Skill, self).update(et)
         if not self.fsm.owner.command_queue.empty():
             self.fsm.owner.direction = self.fsm.owner.command_queue.get()
         if self.fsm.owner.pos_x == self.fsm.owner.moving_target_x and self.fsm.owner.pos_y == self.fsm.owner.moving_target_y:
@@ -426,6 +468,7 @@ class Character_State_Skill(FSM_State):
 
     def draw(self, et):
         super(Character_State_Skill, self).draw(et)
+        self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
 
     def exit(self):
         super(Character_State_Skill, self).exit()
@@ -434,7 +477,7 @@ class Character_State_Skill(FSM_State):
 
 # state transition
 class Character_State_Move_Transition(FSM_Transition):
-    
+
     def __init__(self, from_state, to_state, direction, fsm):
         super(Character_State_Move_Transition, self).__init__(from_state, to_state, fsm)
         self.trans_n = Character_State_Enum.MOVE_TRANSITION
@@ -447,7 +490,7 @@ class Character_State_Move_Transition(FSM_Transition):
         return False
 
 class Character_State_StandToMove_transition(FSM_Transition):
-    
+
     def __init__(self, from_state, to_state, direction, fsm):
         super(Character_State_StandToMove_transition, self).__init__(from_state, to_state, fsm)
         self.trans_n = Character_State_Enum.MOVE_TRANSITION
@@ -460,7 +503,7 @@ class Character_State_StandToMove_transition(FSM_Transition):
         return False
 
 class Character_State_Die_Transition(FSM_Transition):
-    
+
     def __init__(self, from_state, to_state, fsm):
         super(Character_State_Die_Transition, self).__init__(from_state, to_state, fsm)
         self.trans_n = Character_State_Enum.DIE_TRANSITION
@@ -484,6 +527,7 @@ class Character(EventObject):
         self.team = team
         self.selected = False
         self.skills = []
+        self.cur_skill = None
         team.add_character(self)
 
         # property for test
@@ -504,6 +548,9 @@ class Character(EventObject):
         self.resistance = 1     # resistance
         self.attack = 2
         self.attack_range = 1   # physical attack range, will be not shown at character plane
+
+        self.allies = []
+        self.enemies = []
 
         self.direction = Character_State_Enum.STAND
         self.command_queue = Queue.Queue()
@@ -531,7 +578,7 @@ class Character(EventObject):
         self.fsm.add_state(Character_State_Skill(self.fsm))
 
         self.fsm.add_state(Character_State_Attacked(self.fsm))
-
+        self.fsm.add_state(Character_State_Skill_Target_Search(self.fsm))
         self.fsm.add_state(Character_State_Dead(self.fsm))
 
         # add transitions
@@ -616,11 +663,10 @@ class Character(EventObject):
 
     def handle_mouse_lbtn_down(self, evt):
         from Team import Team_Enum
-
+        from Game import CGameApp
+        app = CGameApp.get_instance()
         # attack
         if self.fsm.is_in_state(Character_State_Enum.ATTACK):
-            from Game import CGameApp
-            app = CGameApp.get_instance()
             print "Do Attack and Play Attack Animations"
             self.team.lvl_map.reset_map()
             mouse_character = app.select_character_by_mouse(evt.mouse_pos)
@@ -637,6 +683,29 @@ class Character(EventObject):
             else:
                 self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
 
+        elif self.fsm.is_in_state(Character_State_Enum.SKILL_TARGET_SEARCH):
+            # enemies and allies
+            self.enemies = []
+            self.allies = []
+            for skill_tile in app.level_map.skilled_tiles:
+                character = app.team_red.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
+                if character is not None:
+                    if character.team.name == app.cur_team.name:
+                        self.allies.append(character)
+                        print "Ally: %s" % str(character.name)
+                    else:
+                        self.enemies.append(character)
+                        print "Enemy: %s" % str(character.name)
+                character = app.team_blue.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
+                if character is not None:
+                    if character.team.name == app.cur_team.name:
+                        self.allies.append(character)
+                        print "Ally: %s" % str(character.name)
+                    else:
+                        self.enemies.append(character)
+                        print "Enemy: %s" % str(character.name)
+            # emit skills to characters
+            self.cur_skill.emit(self.enemies, self.allies)
 
         # stand for moving
         elif self.fsm.is_in_state(Character_State_Enum.STAND):

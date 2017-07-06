@@ -31,6 +31,7 @@ class MapTile(object):
 
         # for quad tree, do not used now. check quad tree (in Map.py) for details
         self.marked = False
+        self.skill_marked = False
 
         # tile advantage, not use now
         # ...
@@ -49,6 +50,8 @@ class MapTile(object):
         self.in_open_list = False
         # for travel map
         self.marked = False
+        self.skill_marked = False
+        self.skill_step = 0
 
     def set_occupy(self, is_occupy):
         self.occupy = is_occupy
@@ -59,6 +62,13 @@ class MapTile(object):
     def set_pos(self, x, y):
         self.pos_x = x
         self.pos_y = y
+
+    def draw_skill_rect(self, color):
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        x = self.pos_x + app.offset_x
+        y = self.pos_y + app.offset_y
+        pygame.draw.rect(CGameApp.get_instance().screen, color, (x, y, self.width, self.height), 2)
 
     def draw(self, et):
         from Game import CGameApp
