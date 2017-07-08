@@ -70,7 +70,7 @@ class Skill(object):
         if self.anim is not None:
             return self.anim.get_icon()
 
-    def emit(self, enemies, allies):
+    def emit(self, character, enemies, allies):
         print "Emit Skill"
 
     def upgrade(self):

@@ -367,7 +367,8 @@ class Character_State_Waiting_For_Command(FSM_State):
     def enter(self):
         super(Character_State_Waiting_For_Command, self).enter()
         character = self.fsm.owner
-        character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = True
+        if character.team is not None:
+            character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = True
         print self.fsm.owner.name + " enter state " + str(self.sn)
 
     def update(self, et):
@@ -528,7 +529,8 @@ class Character(EventObject):
         self.selected = False
         self.skills = []
         self.cur_skill = None
-        team.add_character(self)
+        if team is not None:
+            team.add_character(self)
 
         # property for test
         self.moving_target_x = 360
@@ -705,7 +707,7 @@ class Character(EventObject):
                         self.enemies.append(character)
                         print "Enemy: %s" % str(character.name)
             # emit skills to characters
-            self.cur_skill.emit(self.enemies, self.allies)
+            self.cur_skill.emit(self, self.enemies, self.allies)
 
         # stand for moving
         elif self.fsm.is_in_state(Character_State_Enum.STAND):

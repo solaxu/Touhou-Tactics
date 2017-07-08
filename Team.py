@@ -80,6 +80,7 @@ class Team(EventObject):
         self.fog_of_war = []
         self.characters = {}
         self.dead_characters = {}
+        self.total_turn = 0
 
         # add states
         self.fsm.add_state(Team_State_Normal(self.fsm))
