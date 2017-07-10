@@ -360,8 +360,10 @@ class Prototype_Map_Enum(Enum):
     TILE_SAND = 8
     TILE_TREE = 9
     TILE_GRASS = 10
-    MINI_MAP_WIDTH = 486
-    MINI_MAP_HEIGHT = 486
+    MINI_MAP_WIDTH = 576
+    MINI_MAP_HEIGHT = 576
+    MINI_MAP_CELL_WIDTH = 6
+    MINI_MAP_CELL_HEIGHT = 6
 
 # quad tree for tiles 
 
@@ -500,6 +502,16 @@ class Map_State_Show_MiniMap(FSM_State):
         off_y = lvl_map.mini_map_pos_y - off_y
         pygame.draw.rect(app.screen, (0, 255, 0), (off_x, off_y, rect_x, rect_y), 2)
 
+        # show character icons
+        for (name, character) in app.team_red.characters.items():
+            x = character.pos_x / Prototype_Map_Enum.TILE_WIDTH.value * Prototype_Map_Enum.MINI_MAP_CELL_WIDTH.value + lvl_map.mini_map_pos_x
+            y = character.pos_y / Prototype_Map_Enum.TILE_HEIGHT.value * Prototype_Map_Enum.MINI_MAP_CELL_HEIGHT.value + lvl_map.mini_map_pos_y
+            pygame.draw.rect(app.screen, (255, 0, 0), (x, y, Prototype_Map_Enum.MINI_MAP_CELL_WIDTH.value, Prototype_Map_Enum.MINI_MAP_CELL_HEIGHT.value), 2)
+
+        for (name, character) in app.team_blue.characters.items():
+            x = character.pos_x / Prototype_Map_Enum.TILE_WIDTH.value * Prototype_Map_Enum.MINI_MAP_CELL_WIDTH.value + lvl_map.mini_map_pos_x
+            y = character.pos_y / Prototype_Map_Enum.TILE_HEIGHT.value * Prototype_Map_Enum.MINI_MAP_CELL_HEIGHT.value + lvl_map.mini_map_pos_y
+            pygame.draw.rect(app.screen, (0, 0, 255), (x, y, Prototype_Map_Enum.MINI_MAP_CELL_WIDTH.value, Prototype_Map_Enum.MINI_MAP_CELL_HEIGHT.value), 2)
 
     def exit(self):
         super(Map_State_Show_MiniMap, self).exit()

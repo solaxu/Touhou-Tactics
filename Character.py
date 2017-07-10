@@ -553,6 +553,7 @@ class Character(EventObject):
 
         self.allies = []
         self.enemies = []
+        self.in_character_pool = True
 
         self.direction = Character_State_Enum.STAND
         self.command_queue = Queue.Queue()
@@ -692,7 +693,7 @@ class Character(EventObject):
             for skill_tile in app.level_map.skilled_tiles:
                 character = app.team_red.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
                 if character is not None:
-                    if character.team.name == app.cur_team.name:
+                    if character.team.name == app.cur_player.cur_team.name:
                         self.allies.append(character)
                         print "Ally: %s" % str(character.name)
                     else:
@@ -700,7 +701,7 @@ class Character(EventObject):
                         print "Enemy: %s" % str(character.name)
                 character = app.team_blue.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
                 if character is not None:
-                    if character.team.name == app.cur_team.name:
+                    if character.team.name == app.cur_player.cur_team.name:
                         self.allies.append(character)
                         print "Ally: %s" % str(character.name)
                     else:

@@ -28,6 +28,9 @@ class EventType(Enum):
 
     CHARACTER_ATTACK_EVT = 111
 
+    #
+    GAME_BAN_PICK_TURN = 1000
+
 
 class Event(object):
 

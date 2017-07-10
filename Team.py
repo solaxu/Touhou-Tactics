@@ -12,6 +12,8 @@ class Team_Enum(Enum):
     TEAM_BLUE = 1
     TEAM_CHARACTER_MOVE = 2
     TEAM_NORMAL = 3
+    TEAM_BAN = 4        # undo
+    TEAM_PICK = 5       # undo
 
 # Team state
 
@@ -95,6 +97,7 @@ class Team(EventObject):
 
     def add_character(self, c):
         self.characters[c.name] = c
+        c.team = self
 
     def del_character(self, name):
         del self.characters[name]
@@ -164,7 +167,7 @@ class Team(EventObject):
         mouse_character = app.select_character_by_mouse(evt.mouse_pos)
         if mouse_character is not None:
             self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
-        if app.cur_team.name != self.name:
+        if app.cur_player.team.name != self.name:
             return
         if self.character_selected is None:
             self.character_selected = self.select_character_by_mouse(evt.mouse_pos)

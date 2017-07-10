@@ -12,6 +12,7 @@ class Gui_Enum(Enum):
     Character_Plane = 10000
     Character_Control_Menu = 10001
     Character_Skill_Item_Menu = 10002
+    Character_Ban_Pick = 10003
 
 class GuiElement(EventObject):
 
@@ -231,6 +232,8 @@ class GuiManager(EventObject):
         self.gui_wnds[character_menu.name] = character_menu
         skill_slots = Character_Skill_Item_Menu()
         self.gui_wnds[skill_slots.name] = skill_slots
+        # ban pick stage
+        self.character_bp = Character_Ban_Pick_Stage()
 
     def get_wnd_by_mouse(self, mouse_pos):
         from Map import QuadTreeForTile
@@ -266,7 +269,7 @@ class GuiManager(EventObject):
         app = CGameApp.get_instance()
         if evt.character is not None:
             self.gui_wnds[Gui_Enum.Character_Plane].link_to_character(evt.character)
-            if evt.character.team.name == app.cur_team.name:
+            if evt.character.team.name == app.cur_player.cur_team.name:
                 x = evt.character.pos_x + 18
                 y = evt.character.pos_y + 18
                 x += app.offset_x
@@ -508,26 +511,26 @@ class Character_Control_Menu(GuiWindow):
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].show = True
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].link_to_character(cur_team.character_selected)
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].set_pos(self.x + self.w, self.y)
-            self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_SKILL_CMD))
+            self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_SKILL_CMD))
 
     def handle_move_btn(self):
         print "Handle Move Btn"
         from Game import CGameApp
         app = CGameApp.get_instance()
-        self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
+        self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
-        tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x, app.cur_team.character_selected.pos_y)
-        app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_team.character_selected.ap)
+        tile = app.level_map.get_tile_by_coord(app.cur_player.cur_team.character_selected.pos_x, app.cur_player.cur_team.character_selected.pos_y)
+        app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_player.cur_team.character_selected.ap)
 
     def handle_attack_btn(self):
         print "Handle Attack Btn"
         from Game import CGameApp
         app = CGameApp.get_instance()
-        self.send_event(app.cur_team.character_selected, Event(EventType.CHARACTER_ATTACK_CMD))
+        self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_ATTACK_CMD))
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
-        tile = app.level_map.get_tile_by_coord(app.cur_team.character_selected.pos_x,
-                                               app.cur_team.character_selected.pos_y)
-        app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_team.character_selected.attack_range)
+        tile = app.level_map.get_tile_by_coord(app.cur_player.cur_team.character_selected.pos_x,
+                                               app.cur_player.cur_team.character_selected.pos_y)
+        app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_player.cur_team.character_selected.attack_range)
             
     def draw(self, et):
         super(Character_Control_Menu, self).draw(et)
@@ -670,7 +673,7 @@ class Character_Skill_Item_Menu(GuiWindow):
         from Character import Character_State_Enum
         app = CGameApp.get_instance()
         map = app.level_map
-        team = app.cur_team
+        team = app.cur_player.cur_team
         tile = app.level_map.get_tile_by_coord(team.character_selected.pos_x, team.character_selected.pos_y)
         map.bfs_travel_no_occupy(tile, (0, 0, 255), skill.rng)
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
@@ -718,3 +721,279 @@ class Character_Skill_Item_Menu(GuiWindow):
             self.skill_desc_2.set_text(character.skills[1].desc, (255, 255, 255))
             self.skill_desc_3.set_text(character.skills[2].desc, (255, 255, 255))
             self.skill_desc_4.set_text(character.skills[3].desc, (255, 255, 255))
+
+
+# ban pick stage
+class Character_BP_Stage_Enum(Enum):
+
+    WIDTH = 244
+
+
+class Character_BP_Pic(GuiPicture):
+
+    def __init__(self, name, x, y, w, h, parent):
+        super(Character_BP_Pic, self).__init__(name, x, y, w, h, parent)
+        self.in_character_pool = True
+
+
+class Character_Ban_Pick_Stage(GuiWindow):
+
+    def __init__(self):
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        super(Character_Ban_Pick_Stage, self).__init__(Gui_Enum.Character_Ban_Pick,
+                                                        0, 0, app.screen_w, app.screen_h)
+        self.show = False
+        self.ui_frame = pygame.image.load("Media/banpick_screen.png").convert_alpha()
+        self.character_pool_btn = []
+        self.character_red_pick = []
+        self.character_red_ban = []
+        self.character_blue_pick = []
+        self.character_blue_ban = []
+
+        # ban picks
+        self.bp_x = 430
+        self.red_pick_y = 72
+        self.red_ban_y = 259
+        self.blue_pick_y = 447
+        self.blue_ban_y = 634
+
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        x = 20
+        y = 72
+        character_num = 0
+
+        for (name, character) in app.characters.items():
+            character_icon = character.sprite_sheet.frames[0]
+            character_btn = Character_BP_Pic(character.name, x, y, 36, 36, self)
+            character_btn.set_picture(character_icon)
+            self.character_pool_btn.append(character_btn)
+            character_num += 1
+            if character_num % 10 == 0:
+                x = 20
+                y += 36
+            else:
+                x += 36
+
+        # character plane
+        self.character_pic = self.add_widget(GuiPicture(Character_Plane_Enum.Character_Pic, 3, 378,
+                                                        Character_Plane_Enum.WIDTH.value,
+                                                        Character_Plane_Enum.WIDTH.value, self))
+
+        self.character_name = self.add_widget(GuiLabel(Character_Plane_Enum.Character_Name,
+                                                       153, 378,
+                                                       Character_BP_Stage_Enum.WIDTH.value,
+                                                       Character_Plane_Enum.PROP_HEIGHT.value,
+                                                       (0, 0, 0), 255, "???", (255, 255, 255), self))
+
+        self.character_ap = self.add_widget(GuiLabel(Character_Plane_Enum.Character_AP,
+                                                     153,
+                                                     self.character_name.y + self.character_name.h,
+                                                     Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                     Character_Plane_Enum.PROP_HEIGHT.value,
+                                                     (0, 0, 0), 255, "AP:", (255, 255, 255), self))
+
+        self.character_hp = self.add_widget(GuiLabel(Character_Plane_Enum.Character_HP,
+                                                     153 + self.character_ap.w,
+                                                     self.character_name.y + self.character_name.h,
+                                                     Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                     Character_Plane_Enum.PROP_HEIGHT.value,
+                                                     (0, 0, 0), 255, "HP:", (255, 255, 255), self))
+
+        self.character_mp = self.add_widget(GuiLabel(Character_Plane_Enum.Character_MP,
+                                                     153,
+                                                     self.character_ap.y + self.character_ap.h,
+                                                     Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                     Character_Plane_Enum.PROP_HEIGHT.value,
+                                                     (0, 0, 0), 255, "MP:", (255, 255, 255), self))
+
+        self.character_atk = self.add_widget(GuiLabel(Character_Plane_Enum.Character_ATK,
+                                                      153 + self.character_mp.w,
+                                                      self.character_ap.y + self.character_ap.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "ATK:", (255, 255, 255), self))
+
+        self.character_atk_rng = self.add_widget(GuiLabel(Character_Plane_Enum.Character_ATK_RNG,
+                                                          153,
+                                                          self.character_mp.y + self.character_mp.h,
+                                                          Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                          Character_Plane_Enum.PROP_HEIGHT.value,
+                                                          (0, 0, 0), 255, "RNG:", (255, 255, 255), self))
+
+        self.character_def = self.add_widget(GuiLabel(Character_Plane_Enum.Character_DEF,
+                                                      153 + self.character_atk_rng.w,
+                                                      self.character_mp.y + self.character_mp.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "DEF:", (255, 255, 255), self))
+
+        self.character_res = self.add_widget(GuiLabel(Character_Plane_Enum.Character_RES,
+                                                      153,
+                                                      self.character_atk_rng.y + self.character_atk_rng.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "RES:", (255, 255, 255), self))
+
+        self.character_str = self.add_widget(GuiLabel(Character_Plane_Enum.Character_STR,
+                                                      153 + self.character_res.w,
+                                                      self.character_atk_rng.y + self.character_atk_rng.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "STR:", (255, 255, 255), self))
+
+        self.character_agi = self.add_widget(GuiLabel(Character_Plane_Enum.Character_AGI,
+                                                      153,
+                                                      self.character_res.y + self.character_res.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "AGI:", (255, 255, 255), self))
+
+        self.character_int = self.add_widget(GuiLabel(Character_Plane_Enum.Character_INT,
+                                                      153 + self.character_agi.w,
+                                                      self.character_res.y + self.character_res.h,
+                                                      Character_BP_Stage_Enum.WIDTH.value / 2,
+                                                      Character_Plane_Enum.PROP_HEIGHT.value,
+                                                      (0, 0, 0), 255, "INT:", (255, 255, 255), self))
+
+    def draw(self, et):
+        from Map import QuadTreeForTile
+        from LocalInput import LocalInput
+        from Game import CGameApp
+        app = CGameApp.get_instance()
+        mouse_x = LocalInput.mouse_pos[0]
+        mouse_y = LocalInput.mouse_pos[1]
+
+        app.screen.blit(self.ui_frame, (0, 0))
+
+        for character_btn in self.character_pool_btn:
+            if character_btn.in_character_pool:
+                character_btn.draw(et)
+            if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w - 1, character_btn.h - 1,
+                                          mouse_x, mouse_y, 0, 0) and character_btn.in_character_pool:
+                if character_btn.in_character_pool:
+                    pygame.draw.rect(app.screen, (255, 0, 255), (character_btn.x, character_btn.y, 36, 36), 2)
+                    self.link_to_character(character_btn.name)
+
+        # bp coords
+        x = self.bp_x
+        y = self.blue_pick_y
+        count = 0
+        for character_btn in self.character_blue_pick:
+            count += 1
+            character_btn.x = x
+            character_btn.y = y
+            character_btn.draw(et)
+            if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w - 1, character_btn.h - 1,
+                                          mouse_x, mouse_y, 0, 0):
+                pygame.draw.rect(app.screen, (255, 0, 255), (character_btn.x, character_btn.y, 36, 36), 2)
+                self.link_to_character(character_btn.name)
+            if count % 15 == 0:
+                x = self.bp_x
+                y += 36
+            else:
+                x += 36
+
+        x = self.bp_x
+        y = self.blue_ban_y
+        count = 0
+        for character_btn in self.character_blue_ban:
+            count += 1
+            character_btn.x = x
+            character_btn.y = y
+            character_btn.draw(et)
+            if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w - 1, character_btn.h - 1,
+                                          mouse_x, mouse_y, 0, 0):
+                pygame.draw.rect(app.screen, (255, 0, 255), (character_btn.x, character_btn.y, 36, 36), 2)
+                self.link_to_character(character_btn.name)
+            count += 1
+            if count % 15 == 0:
+                x = self.bp_x
+                y += 36
+            else:
+                x += 36
+
+        x = self.bp_x
+        y = self.red_pick_y
+        count = 0
+        for character_btn in self.character_red_pick:
+            count += 1
+            character_btn.x = x
+            character_btn.y = y
+            character_btn.draw(et)
+            if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w - 1, character_btn.h - 1,
+                                          mouse_x, mouse_y, 0, 0):
+                pygame.draw.rect(app.screen, (255, 0, 255), (character_btn.x, character_btn.y, 36, 36), 2)
+                self.link_to_character(character_btn.name)
+            count += 1
+            if count % 15 == 0:
+                x = self.bp_x
+                y += 36
+            else:
+                x += 36
+
+        x = self.bp_x
+        y = self.red_ban_y
+        count = 0
+        for character_btn in self.character_red_ban:
+            count += 1
+            character_btn.x = x
+            character_btn.y = y
+            character_btn.draw(et)
+            if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w - 1, character_btn.h - 1,
+                                          mouse_x, mouse_y, 0, 0):
+                pygame.draw.rect(app.screen, (255, 0, 255), (character_btn.x, character_btn.y, 36, 36), 2)
+                self.link_to_character(character_btn.name)
+            count += 1
+            if count % 15 == 0:
+                x = self.bp_x
+                y += 36
+            else:
+                x += 36
+
+        self.character_name.draw(et)
+        self.character_pic.draw(et)
+        pygame.draw.rect(app.screen, (255, 0, 255), (3, 378, 150, 150), 1)
+        self.character_str.draw(et)
+        self.character_agi.draw(et)
+        self.character_int.draw(et)
+        self.character_atk.draw(et)
+        self.character_atk_rng.draw(et)
+        self.character_def.draw(et)
+        self.character_res.draw(et)
+        self.character_ap.draw(et)
+        self.character_hp.draw(et)
+        self.character_mp.draw(et)
+
+
+    def link_to_character(self, name):
+        from Game import CGameApp
+        characters = CGameApp.get_instance().characters
+        if name in characters:
+            character = characters[name]
+            self.character_name.set_text(character.name, (255, 255, 255))
+            self.character_pic.set_picture(character.sprite)
+            self.character_str.set_text("STR: " + str(character.strength), (255, 255, 255))
+            self.character_agi.set_text("AGI: " + str(character.agility), (255, 255, 255))
+            self.character_int.set_text("INT: " + str(character.intelligence), (255, 255, 255))
+            self.character_atk.set_text("ATK: " + str(character.attack), (255, 255, 255))
+            self.character_atk_rng.set_text("RNG: " + str(character.attack_range), (255, 255, 255))
+            self.character_def.set_text("DEF: " + str(character.defense), (255, 255, 255))
+            self.character_res.set_text("RES: " + str(character.resistance), (255, 255, 255))
+            self.character_ap.set_text("AP: " + str(character.ap), (255, 255, 255))
+            self.character_hp.set_text("HP: " + str(character.hp), (255, 255, 255))
+            self.character_mp.set_text("MP: " + str(character.mp), (255, 255, 255))
+        else:
+            self.character_name.set_text("???", (255, 255, 255))
+            self.character_pic.set_picture(None)
+            self.character_str.set_text("STR:", (255, 255, 255))
+            self.character_agi.set_text("AGI:", (255, 255, 255))
+            self.character_int.set_text("INT:", (255, 255, 255))
+            self.character_atk.set_text("ATK:", (255, 255, 255))
+            self.character_atk_rng.set_text("RNG:", (255, 255, 255))
+            self.character_def.set_text("DEF:", (255, 255, 255))
+            self.character_res.set_text("RES:", (255, 255, 255))
+            self.character_ap.set_text("AP:", (255, 255, 255))
+            self.character_hp.set_text("HP:", (255, 255, 255))
+            self.character_mp.set_text("MP:", (255, 255, 255))

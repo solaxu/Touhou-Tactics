@@ -61,18 +61,27 @@ class Game_State_Ban_Pick(FSM_State):
     def __init__(self, fsm):
         super(Game_State_Ban_Pick, self).__init__(fsm)
         self.sn = Game_Enum.Game_Characters_Ban_Pick
+        self.bp_ui = None
 
     def update(self, et):
         super(Game_State_Ban_Pick, self).update(et)
+        self.fsm.owner.player_host.update(et)
+        self.fsm.owner.player_guest.update(et)
 
     def draw(self, et):
         super(Game_State_Ban_Pick, self).draw(et)
+        if self.bp_ui is not None:
+            self.bp_ui.draw(et)
+        app = self.fsm.owner
+        app.cur_player.draw(et)
 
     def enter(self):
         super(Game_State_Ban_Pick, self).enter()
         app = self.fsm.owner
         app.player_host.fsm.change_to_state(Player_Enum.Player_State_Pick_Characters)
-        app.player_guest.fsm.change_to_state(Player_Enum.Player_State_Ban_Characters)
+        app.cur_player = app.player_host
+        app.player_guest.fsm.change_to_state(Player_Enum.Player_State_Pick_Characters)
+        self.bp_ui = CGameApp.get_instance().gui_manager.character_bp
 
     def exit(self):
         super(Game_State_Ban_Pick, self).exit()
@@ -94,6 +103,7 @@ class Game_State_Init(FSM_State):
             app.screen.blit(app.begin_game, (250, 250))
             w = app.begin_game.get_width()
             h = app.begin_game.get_height()
+            from Map import QuadTreeForTile
             if QuadTreeForTile.check_tile(250, 250, w, h, LocalInput.mouse_pos[0], LocalInput.mouse_pos[1], 0, 0):
                 pygame.draw.rect(app.screen, (0, 255, 0), (250, 250, w, h), 1)
 
@@ -111,12 +121,41 @@ class Game_State_Playing(FSM_State):
 
     def update(self, et):
         super(Game_State_Playing, self).update(et)
+        self.fsm.owner.level_map.update(et)
 
     def draw(self, et):
         super(Game_State_Playing, self).draw(et)
+        self.fsm.owner.level_map.draw(et)
+        self.fsm.owner.gui_manager.draw(et)
 
     def enter(self):
         super(Game_State_Playing, self).enter()
+        # characters' position
+        team_red = self.fsm.owner.team_red
+        team_blue = self.fsm.owner.team_blue
+        team_red_x = 36
+        team_red_y = 3276
+        team_blue_x = 3276
+        team_blue_y = 108
+        count = 0
+        for (name, character) in team_red.characters.items():
+            count += 1
+            character.set_pos(team_red_x, team_red_y)
+            if count % 4 == 0:
+                team_red_x = 36
+                team_red_y += 36
+            else:
+                team_red_x += 36
+
+        count = 0
+        for (name, character) in team_blue.characters.items():
+            count += 1
+            character.set_pos(team_blue_x, team_blue_y)
+            if count % 4 == 0:
+                team_blue_x = 3276
+                team_blue_y += 36
+            else:
+                team_blue_x += 36
 
     def exit(self):
         super(Game_State_Playing, self).exit()
@@ -148,10 +187,9 @@ class CGameApp(EventObject):
         self.offset_y = 0
         self.gui_manager = None
         self.total_turn = 0
-        self.player_host = Player()
-        self.player_guest = Player()
         self.characters = {}
-
+        self.player_host = None
+        self.player_guest = None
         # add states
         self.fsm.add_state(Game_State_Init(self.fsm))
         self.fsm.add_state(Game_State_Ban_Pick(self.fsm))
@@ -160,15 +198,17 @@ class CGameApp(EventObject):
 
         self.fsm.change_to_state(Game_Enum.Game_Init)
 
+        self.cur_player = None
+
         # register event handlers
         # left mouse
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
+        self.add_handler(EventType.GAME_BAN_PICK_TURN, self.handle_bp_turn_change)
         # arrow keys
         self.add_handler(EventType.SCROLL_MAP, self.handle_scroll_map)
 
 
     def create(self):
-        self.gui_manager = GuiManager()
         Skill_Animations.load_skill_res()
         # character sheets
         hakurei_reimu_sprite_sheet = Sprite_Sheet("Media/walkings/博丽灵梦1.png", 36, 36, 4, 4)
@@ -214,10 +254,12 @@ class CGameApp(EventObject):
         self.level_map.create()
         self.team_red = Team(Team_Enum.TEAM_RED, self.level_map)
         self.team_blue = Team(Team_Enum.TEAM_BLUE, self.level_map)
+        self.player_host = Player()
+        self.player_guest = Player()
         self.level_map.team_red = self.team_red
         self.level_map.team_blue = self.team_blue
 
-        hakurei_reimu = Character("Hakurei Reimu", hakurei_reimu_sprite_sheet, self.team_red)
+        hakurei_reimu = Character("Hakurei Reimu", hakurei_reimu_sprite_sheet, None)
         hakurei_reimu.set_picture("Media/characters/博丽灵梦.png")
         self.characters["Hakurei Reimu"] = hakurei_reimu
         hakurei_reimu.add_skill(Hakurei_Reimu_MuSouTenSei())
@@ -225,9 +267,9 @@ class CGameApp(EventObject):
         hakurei_reimu.add_skill(Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu())
         hakurei_reimu.add_skill(Hakurei_Reimu_FuMaJin())
 
-        kirisame_marisa = Character("Kirisame Marisa", kirisame_marisa_sprite_sheet, self.team_blue)
+        kirisame_marisa = Character("Kirisame Marisa", kirisame_marisa_sprite_sheet, None)
         kirisame_marisa.set_picture("Media/characters/雾雨魔理沙.png")
-        self.characters["Krisame Marisa"] = kirisame_marisa
+        self.characters["Kirisame Marisa"] = kirisame_marisa
 
         remilia_scarlet = Character("Remilia Scarlet", remilia_scarlet_sprite_sheet, None)
         remilia_scarlet.set_picture("Media/characters/蕾米莉亚.png")
@@ -283,7 +325,7 @@ class CGameApp(EventObject):
 
         kochiya_sanae = Character("Kochiya Sanae", kochiya_sanae_sprite_sheet, None)
         kochiya_sanae.set_picture("Media/characters/东风谷早苗.png")
-        self.characters["Kochiya Sannae"] = kochiya_sanae
+        self.characters["Kochiya Sanae"] = kochiya_sanae
 
         yasaka_kanako = Character("Yasaka Kanako", yasaka_kanako_sprite_sheet, None)
         yasaka_kanako.set_picture("Media/characters/八坂神奈子.png")
@@ -373,15 +415,14 @@ class CGameApp(EventObject):
         yagokoro_eirin.set_picture("Media/characters/八意永琳.png")
         self.characters["Yagokoro Eirin"] = yagokoro_eirin
 
-        self.team_red.add_character(hakurei_reimu)
-        self.team_blue.add_character(kirisame_marisa)
+        self.gui_manager = GuiManager()
 
         # set character's positions
-        hakurei_reimu.set_pos(288, 288)
-        kirisame_marisa.set_pos(288, 396)
+#        hakurei_reimu.set_pos(288, 288)
+#        kirisame_marisa.set_pos(288, 396)
 
         # set current team for test
-        self.cur_team = self.team_red
+#       self.cur_team = self.team_red
         return
 
 
@@ -408,13 +449,10 @@ class CGameApp(EventObject):
     def update(self, et):
         self.process_evt_queue()
         self.fsm.update(et)
-#        self.level_map.update(et)
         return
     
     def draw(self, et):
         self.fsm.draw(et)
-#        self.level_map.draw(et)
-#        self.gui_manager.draw(et)
         return
     
     def handle_mouse_lbtn_down(self, evt):
@@ -441,7 +479,7 @@ class CGameApp(EventObject):
                 self.player_guest.set_team(self.team_red)
                 self.fsm.change_to_state(Game_Enum.Game_Characters_Ban_Pick)
         elif self.fsm.is_in_state(Game_Enum.Game_Characters_Ban_Pick):
-            pass
+            self.send_event(self.cur_player, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
         elif self.fsm.is_in_state(Game_Enum.Game_Playing):
             if self.cur_team is not None:
                 self.send_event(self.cur_team, evt)
@@ -451,6 +489,25 @@ class CGameApp(EventObject):
         self.offset_x += evt.offset_x
         self.offset_y += evt.offset_y
         return
+
+    def handle_bp_turn_change(self, evt):
+        if self.cur_player == self.player_host:
+            if self.cur_player.fsm.is_in_state(Player_Enum.Player_State_Pick_Characters):
+                self.cur_player.fsm.change_to_state(Player_Enum.Player_State_Ban_Characters)
+            elif self.cur_player.fsm.is_in_state(Player_Enum.Player_State_Ban_Characters):
+                self.cur_player.fsm.change_to_state(Player_Enum.Player_State_Pick_Characters)
+            self.cur_player = self.player_guest
+        elif self.cur_player == self.player_guest:
+            if self.cur_player.fsm.is_in_state(Player_Enum.Player_State_Pick_Characters):
+                self.cur_player.fsm.change_to_state(Player_Enum.Player_State_Ban_Characters)
+            elif self.cur_player.fsm.is_in_state(Player_Enum.Player_State_Ban_Characters):
+                self.cur_player.fsm.change_to_state(Player_Enum.Player_State_Pick_Characters)
+            self.cur_player = self.player_host
+        bp_ui = self.gui_manager.character_bp
+        if len(bp_ui.character_red_pick) == 8 and len(bp_ui.character_blue_pick) == 8:
+            self.fsm.change_to_state(Game_Enum.Game_Playing)
+            self.player_host.fsm.change_to_state(Player_Enum.Player_State_In_Game)
+            self.player_guest.fsm.change_to_state(Player_Enum.Player_State_In_Game)
 
     @staticmethod
     def get_instance():

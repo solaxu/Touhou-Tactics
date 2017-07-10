@@ -111,7 +111,7 @@ class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
     def __init__(self):
         super(Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu, self).__init__(
             "MuGenNoKoSoKuKiGanSaTsu", 0, 0, Skill_Enum.BUFF_AP,
-            Skill_Enum.DEBUFF_NONE, "MuGenNoKoSoKuKiGanSaTsu, Lv: 1. Gain more 3 action points. Duration: 1 turn",
+            Skill_Enum.DEBUFF_NONE, "MuGenNoKoSoKuKiGanSaTsu, Lv: 1. Gain 3 action points. Duration: 1 turn",
             Skill_Anim_Drawer(Skill_Animations.AP_UP)
         )
         self.ap_buff = 3

@@ -66,10 +66,12 @@ class FSM_Machine(object):
                 if trans.check_transition():
                     self.change_to_state(trans.to_sn)
                     break
-        self.cur_state.update(et)
+        if self.cur_state is not None:
+            self.cur_state.update(et)
 
     def draw(self, et):
-        self.cur_state.draw(et)
+        if self.cur_state is not None:
+            self.cur_state.draw(et)
 
     def is_in_state(self, sn):
         return sn == self.cur_state.sn

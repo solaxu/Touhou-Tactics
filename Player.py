@@ -1,7 +1,7 @@
 from enum import Enum
 from Event import *
 from FSM import *
-
+from GUI import *
 
 class Player_Enum(Enum):
 
@@ -17,15 +17,21 @@ class Player_State_Pick_Characters(FSM_State):
     def __init__(self, fsm):
         super(Player_State_Pick_Characters, self).__init__(fsm)
         self.sn = Player_Enum.Player_State_Pick_Characters
+        self.pick_tile = GuiLabel("pick_title", 20, 36, 360, 25, (0, 0, 0), 255, "", (255, 255, 255), None)
+
 
     def update(self, et):
         super(Player_State_Pick_Characters, self).update(et)
         
     def draw(self, et):
         super(Player_State_Pick_Characters, self).draw(et)
+        self.pick_tile.draw(et)
 
     def enter(self):
         super(Player_State_Pick_Characters, self).enter()
+        player = self.fsm.owner
+        pick_title = str(player.team.name) + "'s Turn To Pick"
+        self.pick_tile.set_text(pick_title, (255, 255, 255))
         
     def exit(self):
         super(Player_State_Pick_Characters, self).exit()
@@ -36,15 +42,20 @@ class Player_State_Ban_Characters(FSM_State):
     def __init__(self, fsm):
         super(Player_State_Ban_Characters, self).__init__(fsm)
         self.sn = Player_Enum.Player_State_Ban_Characters
+        self.ban_tile = GuiLabel("ban_title", 20, 36, 360, 25, (0, 0, 0), 255, "", (255, 255, 255), None)
 
     def update(self, et):
         super(Player_State_Ban_Characters, self).update(et)
 
     def draw(self, et):
         super(Player_State_Ban_Characters, self).draw(et)
+        self.ban_tile.draw(et)
 
     def enter(self):
         super(Player_State_Ban_Characters, self).enter()
+        player = self.fsm.owner
+        ban_title = str(player.team.name) + "'s Turn To Ban"
+        self.ban_tile.set_text(ban_title, (255, 255, 255))
 
     def exit(self):
         super(Player_State_Ban_Characters, self).exit()
@@ -120,15 +131,51 @@ class Player(EventObject):
 
         # add handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.mouse_lbtn_down)
+        
+    def update(self, et):
+        self.process_evt_queue()
+        self.fsm.update(et)
+        
+    def draw(self, et):
+        self.fsm.draw(et)
 
     def set_team(self, team):
         self.team = team
 
     def mouse_lbtn_down(self, evt):
-
+        from LocalInput import LocalInput
+        from Map import QuadTreeForTile
+        from Game import CGameApp
+        from Team import*
+        mouse_x = LocalInput.mouse_pos[0]
+        mouse_y = LocalInput.mouse_pos[1]
+        app = CGameApp.get_instance()
+        bp_ui = app.gui_manager.character_bp
         if self.fsm.is_in_state(Player_Enum.Player_State_Pick_Characters):
-            print "Pick Character"
+            for character_btn in bp_ui.character_pool_btn:
+                if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w, character_btn.h,
+                                              mouse_x, mouse_y, 0, 0) and character_btn.in_character_pool:
+                    if character_btn.in_character_pool:
+                        character_btn.in_character_pool = False
+                        if self.team.name == Team_Enum.TEAM_RED:
+                            bp_ui.character_red_pick.append(character_btn)
+                            app.team_red.add_character(app.characters[character_btn.name])
+                        elif self.team.name == Team_Enum.TEAM_BLUE:
+                            bp_ui.character_blue_pick.append(character_btn)
+                            app.team_blue.add_character(app.characters[character_btn.name])
+                    print "Pick Character"
+                    self.send_event(CGameApp.get_instance(), Event(EventType.GAME_BAN_PICK_TURN))
         elif self.fsm.is_in_state(Player_Enum.Player_State_Ban_Characters):
-            print "Ban Character"
+            for character_btn in bp_ui.character_pool_btn:
+                if QuadTreeForTile.check_tile(character_btn.x, character_btn.y, character_btn.w, character_btn.h,
+                                              mouse_x, mouse_y, 0, 0) and character_btn.in_character_pool:
+                    if character_btn.in_character_pool:
+                        character_btn.in_character_pool = False
+                        if self.team.name == Team_Enum.TEAM_RED:
+                            bp_ui.character_red_ban.append(character_btn)
+                        elif self.team.name == Team_Enum.TEAM_BLUE:
+                            bp_ui.character_blue_ban.append(character_btn)
+                    print "Ban Character"
+                    self.send_event(CGameApp.get_instance(), Event(EventType.GAME_BAN_PICK_TURN))
 
 
