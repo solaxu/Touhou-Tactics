@@ -118,25 +118,40 @@ class Game_State_Playing(FSM_State):
     def __init__(self, fsm):
         super(Game_State_Playing, self).__init__(fsm)
         self.sn = Game_Enum.Game_Playing
+        self.team_label = None
 
     def update(self, et):
         super(Game_State_Playing, self).update(et)
         self.fsm.owner.level_map.update(et)
+        app = self.fsm.owner
+        app.player_host.update(et)
+        app.player_guest.update(et)
+        self.team_label.set_text(str(app.cur_player.team.name) + "'s Turn", (255, 255, 255))
 
     def draw(self, et):
         super(Game_State_Playing, self).draw(et)
         self.fsm.owner.level_map.draw(et)
+        self.fsm.owner.player_guest.draw(et)
+        self.fsm.owner.player_host.draw(et)
         self.fsm.owner.gui_manager.draw(et)
+        self.team_label.draw(et)
+        app = self.fsm.owner
+        app.screen.blit(app.end_turn, (400, 700, 200, 50))
+        if QuadTreeForTile.check_tile(400, 700, 200, 50, LocalInput.mouse_pos[0], LocalInput.mouse_pos[1], 0, 0):
+            pygame.draw.rect(app.screen, (255, 255, 255), (400, 700, 200, 50), 1)
 
     def enter(self):
         super(Game_State_Playing, self).enter()
         # characters' position
+        self.team_label = GuiLabel("team label", 400, 0, 200, 30, (0, 0, 0), 255, "", (255, 255, 255), None)
         team_red = self.fsm.owner.team_red
         team_blue = self.fsm.owner.team_blue
         team_red_x = 36
         team_red_y = 3276
-        team_blue_x = 3276
-        team_blue_y = 108
+#        team_blue_x = 3276
+#        team_blue_y = 108
+        team_blue_x = 216
+        team_blue_y = 3276
         count = 0
         for (name, character) in team_red.characters.items():
             count += 1
@@ -152,7 +167,7 @@ class Game_State_Playing(FSM_State):
             count += 1
             character.set_pos(team_blue_x, team_blue_y)
             if count % 4 == 0:
-                team_blue_x = 3276
+                team_blue_x = 216
                 team_blue_y += 36
             else:
                 team_blue_x += 36
@@ -173,6 +188,7 @@ class CGameApp(EventObject):
         self.fsm = FSM_Machine(self)
         pygame.init()
         title_screen = pygame.image.load("Media/title_screen.png")
+        self.end_turn = pygame.image.load("Media/end_turn.png")
         self.title_screen = pygame.transform.scale(title_screen, (self.screen_w, self.screen_h))
         self.screen = pygame.display.set_mode((width, height), 0, 32)
         self.font = pygame.font.Font("Media/DeliusSwashCaps-Regular.ttf", 12)
@@ -353,11 +369,7 @@ class CGameApp(EventObject):
 
         reisen_udongein = Character("Reisen", reisen_udongein_inaba_sprite_sheet, None)
         reisen_udongein.set_picture("Media/characters/铃仙.png")
-        self.characters["Reisen"] = reiuzi_utsuho
-
-        reiuzi_utsuho = Character("Reiuzi Utsuho", reiuzi_utsuho_sprite_sheet, None)
-        reiuzi_utsuho.set_picture("Media/characters/灵乌路空.png")
-        self.characters["Reiuzi Utsuho"] = reiuzi_utsuho
+        self.characters["Reisen"] = reisen_udongein
 
         hoan_meirin = Character("Hoan Meirin", hoan_meirin_sprite_sheet, None)
         hoan_meirin.set_picture("Media/characters/红美玲.png")
@@ -417,12 +429,6 @@ class CGameApp(EventObject):
 
         self.gui_manager = GuiManager()
 
-        # set character's positions
-#        hakurei_reimu.set_pos(288, 288)
-#        kirisame_marisa.set_pos(288, 396)
-
-        # set current team for test
-#       self.cur_team = self.team_red
         return
 
 
@@ -481,8 +487,17 @@ class CGameApp(EventObject):
         elif self.fsm.is_in_state(Game_Enum.Game_Characters_Ban_Pick):
             self.send_event(self.cur_player, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
         elif self.fsm.is_in_state(Game_Enum.Game_Playing):
-            if self.cur_team is not None:
-                self.send_event(self.cur_team, evt)
+            self.send_event(self.player_guest, evt)
+            self.send_event(self.player_host, evt)
+            if QuadTreeForTile.check_tile(400, 700, 200, 50, LocalInput.mouse_pos[0], LocalInput.mouse_pos[1], 0, 0):
+                if self.cur_player.team.name == self.player_host.team.name:
+                    self.player_host.fsm.change_to_state(Player_Enum.Player_State_Waiting)
+                    self.player_guest.fsm.change_to_state(Player_Enum.Player_State_In_Turn)
+                    self.cur_player = self.player_guest
+                elif self.cur_player.team.name == self.player_guest.team.name:
+                    self.player_guest.fsm.change_to_state(Player_Enum.Player_State_Waiting)
+                    self.player_host.fsm.change_to_state(Player_Enum.Player_State_In_Turn)
+                    self.cur_player = self.player_host
         return
 
     def handle_scroll_map(self, evt):
@@ -506,8 +521,8 @@ class CGameApp(EventObject):
         bp_ui = self.gui_manager.character_bp
         if len(bp_ui.character_red_pick) == 8 and len(bp_ui.character_blue_pick) == 8:
             self.fsm.change_to_state(Game_Enum.Game_Playing)
-            self.player_host.fsm.change_to_state(Player_Enum.Player_State_In_Game)
-            self.player_guest.fsm.change_to_state(Player_Enum.Player_State_In_Game)
+            self.player_host.fsm.change_to_state(Player_Enum.Player_State_In_Turn)
+            self.player_guest.fsm.change_to_state(Player_Enum.Player_State_Waiting)
 
     @staticmethod
     def get_instance():

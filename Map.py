@@ -567,7 +567,7 @@ class PrototypeLevelMap(LevelMap):
                     t = int(elem)
                     occupy = t == Prototype_Map_Enum.TILE_GRASS.value or \
                              t == Prototype_Map_Enum.TILE_MAGIC_CIRCLR.value
-                    if t == Prototype_Map_Enum.TILE_SAND.value:
+                    if t == Prototype_Map_Enum.TILE_SAND.value or t == Prototype_Map_Enum.TILE_SAFE_AREA.value:
                         occupy = True
                     tile = MapTile(self.tile_imgs[t], self.tile_width, self.tile_height, not occupy)
 #                    print str(occupy) + " ",
@@ -622,16 +622,11 @@ class PrototypeLevelMap(LevelMap):
         self.team_blue.update(et)
 
     def draw(self, et):
-#        print et
-#        self.tiles_drawn = 0
         view_pot = self.get_view_port()
         for quad in self.render_quads:
             for tile in quad.tiles:
                 if QuadTreeForTile.check_tile(view_pot[0], view_pot[1], view_pot[2], view_pot[3], tile.pos_x, tile.pos_y, tile.width, tile.height):
                     tile.draw(et)
-        self.team_red.draw(et)
-        self.team_blue.draw(et)
-#        print self.tiles_drawn
         self.fsm.draw(et)
         return
 

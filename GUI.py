@@ -269,7 +269,7 @@ class GuiManager(EventObject):
         app = CGameApp.get_instance()
         if evt.character is not None:
             self.gui_wnds[Gui_Enum.Character_Plane].link_to_character(evt.character)
-            if evt.character.team.name == app.cur_player.cur_team.name:
+            if evt.character.team.name == app.cur_player.team.name:
                 x = evt.character.pos_x + 18
                 y = evt.character.pos_y + 18
                 x += app.offset_x
@@ -503,6 +503,10 @@ class Character_Control_Menu(GuiWindow):
 
     def handle_skill_btn(self):
         print "Select Skill"
+        from Game import CGameApp
+        from Team import Team_Enum
+        app = CGameApp.get_instance()
+        app.cur_player.team.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
         if self.show:
             from Game import CGameApp
             app = CGameApp.get_instance()
@@ -511,26 +515,31 @@ class Character_Control_Menu(GuiWindow):
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].show = True
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].link_to_character(cur_team.character_selected)
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].set_pos(self.x + self.w, self.y)
-            self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_SKILL_CMD))
+            self.send_event(app.cur_player.team.character_selected, Event(EventType.CHARACTER_SKILL_CMD))
 
     def handle_move_btn(self):
         print "Handle Move Btn"
         from Game import CGameApp
+        from Team import Team_Enum
         app = CGameApp.get_instance()
-        self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
-        self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
-        tile = app.level_map.get_tile_by_coord(app.cur_player.cur_team.character_selected.pos_x, app.cur_player.cur_team.character_selected.pos_y)
-        app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_player.cur_team.character_selected.ap)
+        app.cur_player.team.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
+        if app.cur_player.team.character_selected is not None:
+            self.send_event(app.cur_player.team.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
+            self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
+            tile = app.level_map.get_tile_by_coord(app.cur_player.team.character_selected.pos_x, app.cur_player.team.character_selected.pos_y)
+            app.level_map.bfs_travel(tile, (0, 0, 255, 196), app.cur_player.team.character_selected.ap)
 
     def handle_attack_btn(self):
         print "Handle Attack Btn"
         from Game import CGameApp
+        from Team import Team_Enum
         app = CGameApp.get_instance()
-        self.send_event(app.cur_player.cur_team.character_selected, Event(EventType.CHARACTER_ATTACK_CMD))
+        app.cur_player.team.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
+        self.send_event(app.cur_player.team.character_selected, Event(EventType.CHARACTER_ATTACK_CMD))
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
-        tile = app.level_map.get_tile_by_coord(app.cur_player.cur_team.character_selected.pos_x,
-                                               app.cur_player.cur_team.character_selected.pos_y)
-        app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_player.cur_team.character_selected.attack_range)
+        tile = app.level_map.get_tile_by_coord(app.cur_player.team.character_selected.pos_x,
+                                               app.cur_player.team.character_selected.pos_y)
+        app.level_map.bfs_travel_no_occupy(tile, (255, 0, 0, 196), app.cur_player.team.character_selected.attack_range)
             
     def draw(self, et):
         super(Character_Control_Menu, self).draw(et)
@@ -673,7 +682,7 @@ class Character_Skill_Item_Menu(GuiWindow):
         from Character import Character_State_Enum
         app = CGameApp.get_instance()
         map = app.level_map
-        team = app.cur_player.cur_team
+        team = app.cur_player.team
         tile = app.level_map.get_tile_by_coord(team.character_selected.pos_x, team.character_selected.pos_y)
         map.bfs_travel_no_occupy(tile, (0, 0, 255), skill.rng)
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))

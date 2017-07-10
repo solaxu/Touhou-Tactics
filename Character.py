@@ -370,6 +370,9 @@ class Character_State_Waiting_For_Command(FSM_State):
         if character.team is not None:
             character.team.lvl_map.get_tile_by_coord(character.pos_x, character.pos_y).occupy = True
         print self.fsm.owner.name + " enter state " + str(self.sn)
+        if self.fsm.owner.team is not None:
+            from Team import Team_Enum
+            self.fsm.owner.team.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
 
     def update(self, et):
         super(Character_State_Waiting_For_Command, self).update(et)
@@ -382,6 +385,17 @@ class Character_State_Waiting_For_Command(FSM_State):
 
     def draw(self, et):
         super(Character_State_Waiting_For_Command, self).draw(et)
+        from Game import CGameApp
+        from Team import Team_Enum
+        app = CGameApp.get_instance()
+        c = (255, 255, 255)
+        if self.fsm.owner.team.name == Team_Enum.TEAM_RED:
+            c = (255, 0, 0)
+        elif self.fsm.owner.team.name == Team_Enum.TEAM_BLUE:
+            c = (0, 0, 255)
+        x = self.fsm.owner.get_pos()[0] + app.offset_x
+        y = self.fsm.owner.get_pos()[1] + app.offset_y
+        pygame.draw.ellipse(app.screen, c, ((x, y), (36, 36)), 2)
         self.fsm.owner.sprite_sheet.draw(0, self.fsm.owner.get_pos())
 
     def exit(self):
@@ -541,7 +555,7 @@ class Character(EventObject):
         self.lvl = 1            # level
         self.exp = 0            # experience
         self.ap = 10            # action point, for moving, attacking and spelling
-        self.hp = 1             # health point
+        self.hp = 2             # health point
         self.mp = 1             # magic point
         self.agility = 1        # agility
         self.strength = 1       # strength
@@ -673,10 +687,11 @@ class Character(EventObject):
             print "Do Attack and Play Attack Animations"
             self.team.lvl_map.reset_map()
             mouse_character = app.select_character_by_mouse(evt.mouse_pos)
-
             if mouse_character is not None:
                 rng = self.get_range(mouse_character.pos_x, mouse_character.pos_y)
                 if mouse_character.name == self.name:
+                    self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
+                elif mouse_character.team == self.team:
                     self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
                 elif rng <= self.attack_range:
                     print "Do Attack"
@@ -755,7 +770,6 @@ class Character(EventObject):
         from Team import Team_Enum
         if self.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
             print "Change to Stand for moving"
-            self.fsm.owner.team.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_MOVE)
             self.fsm.change_to_state(Character_State_Enum.STAND)
 
     def handle_attack_cmd(self, evt):

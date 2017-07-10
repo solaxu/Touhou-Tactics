@@ -10,7 +10,7 @@ class Team_Enum(Enum):
     
     TEAM_RED = 0
     TEAM_BLUE = 1
-    TEAM_CHARACTER_MOVE = 2
+    TEAM_CHARACTER_SELECTED = 2
     TEAM_NORMAL = 3
     TEAM_BAN = 4        # undo
     TEAM_PICK = 5       # undo
@@ -26,7 +26,7 @@ class Team_State_Normal(FSM_State):
 
     def enter(self):
         super(Team_State_Normal, self).enter()
-        # print self.fsm.owner.name + " enter state " + str(self.sn)
+        print str(self.fsm.owner.name) + " enter state " + str(self.sn)
 
     def update(self, et):
         super(Team_State_Normal, self).update(et)
@@ -40,7 +40,7 @@ class Team_State_Normal(FSM_State):
 
     def exit(self):
         super(Team_State_Normal, self).exit()
-        # print self.fsm.owner.name + " exit state " + str(self.sn)
+        print str(self.fsm.owner.name) + " exit state " + str(self.sn)
 
 # Character selected
 
@@ -48,11 +48,11 @@ class Team_State_Character_Selected(FSM_State):
 
     def __init__(self, fsm):
         super(Team_State_Character_Selected, self).__init__(fsm)
-        self.sn = Team_Enum.TEAM_CHARACTER_MOVE
+        self.sn = Team_Enum.TEAM_CHARACTER_SELECTED
 
     def enter(self):
         super(Team_State_Character_Selected, self).enter()
-        # print self.fsm.owner.name + " enter state " + str(self.sn)
+        print str(self.fsm.owner.name) + " enter state " + str(self.sn)
 
     def update(self, et):
         super(Team_State_Character_Selected, self).update(et)
@@ -67,7 +67,7 @@ class Team_State_Character_Selected(FSM_State):
 
     def exit(self):
         super(Team_State_Character_Selected, self).exit()
-        # print self.fsm.owner.name + " exit state " + str(self.sn)
+        print str(self.fsm.owner.name) + " exit state " + str(self.sn)
 
 # Team class
 
@@ -88,7 +88,7 @@ class Team(EventObject):
         self.fsm.add_state(Team_State_Normal(self.fsm))
         self.fsm.add_state(Team_State_Character_Selected(self.fsm))
 
-        self.fsm.cur_state = self.fsm.states[Team_Enum.TEAM_NORMAL]
+        self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
 
         # register event handlers
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
@@ -156,6 +156,7 @@ class Team(EventObject):
         from Game import CGameApp
         app = CGameApp.get_instance()
         self.lvl_map.reset_map()
+        self.fsm.change_to_state(Team_Enum.TEAM_NORMAL)
         self.send_event(app.gui_manager, Event(EventType.CLOSE_CHARACTER_MENU))
         if self.character_selected is not None:
             self.character_selected.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
@@ -165,19 +166,21 @@ class Team(EventObject):
         from Game import CGameApp
         app = CGameApp.get_instance()
         mouse_character = app.select_character_by_mouse(evt.mouse_pos)
-        if mouse_character is not None:
-            self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
-        if app.cur_player.team.name != self.name:
-            return
-        if self.character_selected is None:
-            self.character_selected = self.select_character_by_mouse(evt.mouse_pos)
-        if self.character_selected is not None:
-            self.character_selected.selected = True
+        if self.fsm.is_in_state(Team_Enum.TEAM_NORMAL):
+            print str(self.name) + " in Normal State"
             if mouse_character is not None:
-                if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
-                    self.send_event(self.character_selected, Event(EventType.CHARACTER_MOVE_CMD))
-                elif self.character_selected.fsm.is_in_state(Character_State_Enum.ATTACK):
-                    print "Do Attack"
+                self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
+                if mouse_character.team.name != app.cur_player.team.name:
+                    return
                 else:
-                    pass
-            self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
+                    self.character_selected = mouse_character
+                    self.send_event(app.gui_manager,
+                                    Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
+                    self.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
+        elif self.fsm.is_in_state(Team_Enum.TEAM_CHARACTER_SELECTED):
+            print str(self.name) + " in Selected State"
+            if mouse_character is not None:
+                self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
+            if self.character_selected is not None:
+                self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
+            return
