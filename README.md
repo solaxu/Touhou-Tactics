@@ -8,6 +8,11 @@ Terrible coding coz...just typing.
 代码写的乱，因为是边想边写的打补丁“修正主义”，准备整体先走一遍。
 
 # Screenshots:
-![skills](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/BanPickStage.png)
-![select target](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/Skill_Emit.png)
-![skills](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/Skills_Descs.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/01.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/02.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/03.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/04.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/05.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/06.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/07.png)
+![s](https://github.com/solaxu/Touhou-Tactics/blob/master/screenshot/08.png)
