@@ -179,8 +179,9 @@ class Team(EventObject):
                     self.fsm.change_to_state(Team_Enum.TEAM_CHARACTER_SELECTED)
         elif self.fsm.is_in_state(Team_Enum.TEAM_CHARACTER_SELECTED):
             print str(self.name) + " in Selected State"
-            if mouse_character is not None:
-                self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
+            if self.character_selected.fsm.is_in_state(Character_State_Enum.WAITING_FOR_CMD):
+                if mouse_character is not None:
+                    self.send_event(app.gui_manager, Event_Gui_Show_Character_Menu(EventType.SHOW_CHARACTER_MENU, mouse_character))
             if self.character_selected is not None:
                 self.send_event(self.character_selected, Event_Mouse_LBTN_DOWN(EventType.MOUSE_LBTN_DOWN, LocalInput.mouse_pos))
             return

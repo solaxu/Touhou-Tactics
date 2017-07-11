@@ -169,6 +169,78 @@ class Player(EventObject):
     def set_team(self, team):
         self.team = team
 
+    def calculate_buffs(self):
+        from Game import CGameApp
+        characters = CGameApp.get_instance().characters
+        for character_name in self.team.characters:
+            character = characters[character_name]
+            if character.immortal:
+                character.buffs = []
+                character.buff_aura = {}
+            else:
+                character.immortal = False
+                character.fuin = False
+
+                AP = character.base_ap
+                HP = character.base_hp
+                MP = character.base_mp
+                AGI = character.base_agility
+                STR = character.base_strength
+                INT = character.base_intelligence
+                DEF = character.base_defense
+                RES = character.base_resistance
+                ATK = character.base_attack
+
+                for buff in character.buffs:
+                    if buff.DELAY_TIME <= 0:
+                        AP += buff.AP
+                        HP += buff.HP
+                        MP += buff.MP
+                        STR += buff.STR
+                        AGI += buff.AGI
+                        INT += buff.INT
+                        DEF += buff.DEF
+                        RES += buff.RES
+                        ATK += buff.ATK
+                    else:
+                        buff.DELAY_TIME -= 1
+
+                    if buff.IMMORTAL:
+                        character.immortal = True
+                    if buff.FUIN:
+                        character.fuin = True
+
+                for (name, buff) in character.buff_aura.items():
+                    if buff.DELAY_TIME <= 0:
+                        AP += buff.AP
+                        HP += buff.HP
+                        MP += buff.MP
+                        STR += buff.STR
+                        AGI += buff.AGI
+                        INT += buff.INT
+                        DEF += buff.DEF
+                        RES += buff.RES
+                        ATK += buff.ATK
+                    else:
+                        buff.DELAY_TIME -= 1
+
+                    if buff.IMMORTAL:
+                        character.immortal = True
+                    if buff.FUIN:
+                        character.fuin = True
+
+                character.ap = AP
+                print "AP: "+ str(AP)
+                character.hp = HP
+                character.mp = MP
+                character.agility = AGI
+                character.strength = STR
+                character.intelligence = INT
+                character.defense = DEF
+                character.resistance = RES
+                character.attack = ATK
+
+
     def mouse_lbtn_down(self, evt):
         from LocalInput import LocalInput
         from Map import QuadTreeForTile
@@ -209,5 +281,3 @@ class Player(EventObject):
             self.send_event(self.team, evt)
         elif self.fsm.is_in_state(Player_Enum.Player_State_Waiting):
             print str(self.team.name) + " is waiting for its turn"
-
-

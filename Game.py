@@ -498,6 +498,10 @@ class CGameApp(EventObject):
                     self.player_guest.fsm.change_to_state(Player_Enum.Player_State_Waiting)
                     self.player_host.fsm.change_to_state(Player_Enum.Player_State_In_Turn)
                     self.cur_player = self.player_host
+                self.player_host.calculate_buffs()
+                self.player_guest.calculate_buffs()
+                self.cur_player.team.total_turn += 1
+                self.total_turn += 1
         return
 
     def handle_scroll_map(self, evt):

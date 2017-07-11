@@ -513,7 +513,7 @@ class Character_Control_Menu(GuiWindow):
             gui_mgr = app.gui_manager
             cur_team = CGameApp.get_instance().cur_team
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].show = True
-            gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].link_to_character(cur_team.character_selected)
+            gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].link_to_character(app.cur_player.team.character_selected)
             gui_mgr.gui_wnds[Gui_Enum.Character_Skill_Item_Menu].set_pos(self.x + self.w, self.y)
             self.send_event(app.cur_player.team.character_selected, Event(EventType.CHARACTER_SKILL_CMD))
 
@@ -715,7 +715,7 @@ class Character_Skill_Item_Menu(GuiWindow):
         super(Character_Skill_Item_Menu, self).draw(et)
 
     def link_to_character(self, character):
-        if character is not None:
+        if character is not None and len(character.skills) == 4:
             self.skill_btn_1.set_picture(character.skills[0].get_icon())
             self.skill_btn_2.set_picture(character.skills[1].get_icon())
             self.skill_btn_3.set_picture(character.skills[2].get_icon())

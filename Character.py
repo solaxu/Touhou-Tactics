@@ -565,9 +565,25 @@ class Character(EventObject):
         self.attack = 2
         self.attack_range = 1   # physical attack range, will be not shown at character plane
 
+        self.base_ap = 10  # action point, for moving, attacking and spelling
+        self.base_hp = 2  # health point
+        self.base_mp = 1  # magic point
+        self.base_agility = 1  # agility
+        self.base_strength = 1  # strength
+        self.base_intelligence = 1  # intelligence
+        self.base_defense = 1  # defense
+        self.base_resistance = 1  # resistance
+        self.base_attack = 2
+
         self.allies = []
         self.enemies = []
         self.in_character_pool = True
+
+        self.immortal = False
+        self.fuin = False
+
+        self.buffs = []
+        self.buff_aura = {}
 
         self.direction = Character_State_Enum.STAND
         self.command_queue = Queue.Queue()
@@ -649,6 +665,8 @@ class Character(EventObject):
         self.add_handler(EventType.CHARACTER_SKILL_CMD, self.handle_skill_cmd)
         self.add_handler(EventType.MOUSE_LBTN_DOWN, self.handle_mouse_lbtn_down)
         self.add_handler(EventType.CHARACTER_ATTACK_EVT, self.handle_character_attacked)
+        self.add_handler(EventType.CHARACTER_BUFF, self.handle_character_buff)
+        self.add_handler(EventType.CHARACTER_AURA, self.handle_character_aura)
 
     def get_range(self, x, y):
         from Game import CGameApp
@@ -663,7 +681,18 @@ class Character(EventObject):
     def add_skill(self, skill):
         self.skills.append(skill)
 
+    def handle_character_buff(self, evt):
+        self.buffs.append(evt.buff)
+        return
+
+    def handle_character_aura(self, evt):
+        print "Add aura: " + evt.buff.name
+        self.buff_aura[evt.buff.name] = evt.buff
+        return
+
     def handle_character_attacked(self, evt):
+        if self.immortal:
+            return
         dmg = evt.src_character.attack - self.defense
         self.hp -= dmg
         evt.src_character.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)
@@ -679,6 +708,9 @@ class Character(EventObject):
             self.fsm.change_to_state(Character_State_Enum.ATTACKED)
 
     def handle_mouse_lbtn_down(self, evt):
+        if self.fuin:
+            return
+
         from Team import Team_Enum
         from Game import CGameApp
         app = CGameApp.get_instance()
@@ -708,7 +740,7 @@ class Character(EventObject):
             for skill_tile in app.level_map.skilled_tiles:
                 character = app.team_red.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
                 if character is not None:
-                    if character.team.name == app.cur_player.cur_team.name:
+                    if character.team.name == app.cur_player.team.name:
                         self.allies.append(character)
                         print "Ally: %s" % str(character.name)
                     else:
@@ -716,7 +748,7 @@ class Character(EventObject):
                         print "Enemy: %s" % str(character.name)
                 character = app.team_blue.select_character_by_coord(skill_tile.pos_x, skill_tile.pos_y)
                 if character is not None:
-                    if character.team.name == app.cur_player.cur_team.name:
+                    if character.team.name == app.cur_player.team.name:
                         self.allies.append(character)
                         print "Ally: %s" % str(character.name)
                     else:

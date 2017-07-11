@@ -25,9 +25,10 @@ class EventType(Enum):
     CHARACTER_ITEM_CMD = 108
     CHARACTER_ATTACK_CMD = 109
     CHARACTER_SKILL_CMD = 110
+    CHARACTER_ATTACK_EVT = 111  # character attacked
 
-    CHARACTER_ATTACK_EVT = 111
-
+    CHARACTER_BUFF = 130
+    CHARACTER_AURA = 131
     #
     GAME_BAN_PICK_TURN = 1000
 
@@ -39,6 +40,13 @@ class Event(object):
         self.sender = None
         self.reciver = None
         self.delay = 0      # time bomb
+
+class Event_Skill(Event):
+
+    def __init__(self, type, buff):
+        super(Event_Skill, self).__init__(type)
+        self.buff = buff
+
 
 class Event_Character_Attack(Event):
 
