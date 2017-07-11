@@ -56,6 +56,8 @@ class LevelMap(EventObject):
 
     def get_tile_by_index(self, ix, iy):
         index = iy * self.tile_cols + ix
+        if index >= self.tile_rows * self.tile_cols:
+            return None
         return self.tiles[index]
 
     def get_tile_index(self, tile):

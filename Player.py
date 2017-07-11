@@ -1,5 +1,6 @@
 from enum import Enum
 from Event import *
+from dlink import *
 from FSM import *
 from GUI import *
 
@@ -148,6 +149,9 @@ class Player(EventObject):
         self.team = None
         self.fsm = FSM_Machine(self)
 
+        # drawables
+        self.skills_objects = dlink()
+
         # add states
         self.fsm.add_state(Player_State_Pick_Characters(self.fsm))
         self.fsm.add_state(Player_State_Ban_Characters(self.fsm))
@@ -165,6 +169,20 @@ class Player(EventObject):
         
     def draw(self, et):
         self.fsm.draw(et)
+
+        t = self.skills_objects.head.next
+
+        while t is not None:
+            if t.data is not None and t.data.show:
+                t.data.draw(et)
+                t = t.next
+            else:
+                tt = t
+                t = t.next
+                if tt.prev is not None:
+                    tt.prev.next = t
+                if t is not None:
+                    t.prev = tt.prev
 
     def set_team(self, team):
         self.team = team

@@ -760,7 +760,8 @@ class Character(EventObject):
         # stand for moving
         elif self.fsm.is_in_state(Character_State_Enum.STAND):
             tile = self.team.lvl_map.select_tile_by_mouse(evt.mouse_pos)
-
+            if tile is None:
+                return
             if not tile.marked:
                 self.team.lvl_map.reset_map()
                 self.fsm.change_to_state(Character_State_Enum.WAITING_FOR_CMD)

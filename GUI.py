@@ -560,7 +560,7 @@ class Character_Skill_Slots_Enum(Enum):
     Skill_LV_UP_BTN_2 = 9
     Skill_LV_UP_BTN_3 = 10
     Skill_LV_UP_BTN_4 = 11
-    SLOT_SIZE = 48
+    SLOT_SIZE = 36
     HEIGHT = 52      # 48 + 2 * 2
     WIDTH = 196    # 48 * 4 + 2 * 2
 

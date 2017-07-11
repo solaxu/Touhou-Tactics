@@ -151,6 +151,10 @@ class Hakurei_Reimu_MuSouTenSei(Skill_Single_Target):
             return
 
         for ally in allies:
+            skill_drawer = Skill_Anim_Drawer(Skill_Animations.IMMORTAL)
+            skill_drawer.pos = (ally.pos_x, ally.pos_y)
+            skill_drawer.is_loop = False
+            app.cur_player.skills_objects.add_data(skill_drawer)
             buff = Skill_Buff("MuSouTenSei", character, ally)
             buff.IMMORTAL = True
             buff.REMAIN_TIME = self.duration
@@ -182,6 +186,10 @@ class Hakurei_Reimu_MuGenNoKoSoKuKiGanSaTsu(Skill_Single_Target):
             return
 
         for ally in allies:
+            skill_drawer = Skill_Anim_Drawer(Skill_Animations.AP_UP)
+            skill_drawer.pos = (ally.pos_x, ally.pos_y)
+            skill_drawer.is_loop = False
+            app.cur_player.skills_objects.add_data(skill_drawer)
             buff = Skill_Buff("MuGenNoKoSoKuKiGanSaTsu", character, ally)
             buff.AP = self.ap_buff
             buff.REMAIN_TIME = self.duration
@@ -213,8 +221,11 @@ class Hakurei_Reimu_MuSoFuin(Skill_Single_Target):
             return
 
         for ally in allies:
+            skill_drawer = Skill_Anim_Drawer(Skill_Animations.MUSOFUIN)
+            skill_drawer.pos = (ally.pos_x, ally.pos_y)
+            skill_drawer.is_loop = False
+            app.cur_player.skills_objects.add_data(skill_drawer)
             buff = Skill_Buff("MuSoFuin", character, ally)
-            buff.AP = self.ap_buff
             buff.REMAIN_TIME = self.duration
             buff.START_TIME = app.total_turn
             buff.DELAY_TIME = 2
@@ -247,16 +258,22 @@ class Hakurei_Reimu_FuMaJin(Skill_AOE):
 
         for ally in allies:
             if ally.name != character.name:
+                skill_drawer = Skill_Anim_Drawer(Skill_Animations.FUMAJIN)
+                skill_drawer.pos = (ally.pos_x, ally.pos_y)
+                skill_drawer.is_loop = False
+                app.cur_player.skills_objects.add_data(skill_drawer)
                 buff = Skill_Buff("FuMaJin", character, ally)
-                buff.AP = self.ap_buff
                 buff.FUIN = True
                 buff.REMAIN_TIME = self.duration
                 buff.START_TIME = app.total_turn
                 character.send_event(ally, Event_Skill(EventType.CHARACTER_AURA, buff))
 
         for enemy in enemies:
-            buff = Skill_Buff("FuMaJin", character, ally)
-            buff.AP = self.ap_buff
+            skill_drawer = Skill_Anim_Drawer(Skill_Animations.FUMAJIN)
+            skill_drawer.pos = (enemy.pos_x, enemy.pos_y)
+            skill_drawer.is_loop = False
+            app.cur_player.skills_objects.add_data(skill_drawer)
+            buff = Skill_Buff("FuMaJin", character, enemy)
             buff.FUIN = True
             buff.REMAIN_TIME = self.duration
             buff.START_TIME = app.total_turn
