@@ -84,6 +84,14 @@ class Team(EventObject):
         self.dead_characters = {}
         self.total_turn = 0
 
+        # team money
+        from GUI import GuiLabel
+        self.team_money = 0
+        if name == Team_Enum.TEAM_RED:
+            self.team_money_board = GuiLabel("Gold", 400, 30, 100, 30, (0, 0, 0), 255, "", (255, 255, 255), None)
+        elif name == Team_Enum.TEAM_BLUE:
+            self.team_money_board = GuiLabel("Gold", 500, 30, 100, 30, (0, 0, 0), 255, "", (255, 255, 255), None)
+
         # add states
         self.fsm.add_state(Team_State_Normal(self.fsm))
         self.fsm.add_state(Team_State_Character_Selected(self.fsm))
@@ -131,10 +139,15 @@ class Team(EventObject):
         self.process_evt_queue()
         self.fsm.update(et)
         self.update_fog_of_war()
+        if self.name == Team_Enum.TEAM_RED:
+            self.team_money_board.set_text("Gold: " + str(self.team_money), (255, 0, 0))
+        elif self.name == Team_Enum.TEAM_BLUE:
+            self.team_money_board.set_text("Gold: " + str(self.team_money), (0, 0, 255))
 
     def draw(self, et):
         # draw characters
         self.fsm.draw(et)
+        self.team_money_board.draw(et)
 
     def handle_character_stop_moving(self, evt):
         print "Character stops"

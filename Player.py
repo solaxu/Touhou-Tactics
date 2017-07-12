@@ -248,7 +248,6 @@ class Player(EventObject):
                         character.fuin = True
 
                 character.ap = AP
-                print "AP: "+ str(AP)
                 character.hp = HP
                 character.mp = MP
                 character.agility = AGI

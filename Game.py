@@ -431,7 +431,6 @@ class CGameApp(EventObject):
 
         return
 
-
     def select_character_by_mouse(self, mouse_pos):
         character_red = self.team_red.select_character_by_mouse(mouse_pos)
         if character_red is not None:
@@ -500,6 +499,8 @@ class CGameApp(EventObject):
                     self.cur_player = self.player_host
                 self.player_host.calculate_buffs()
                 self.player_guest.calculate_buffs()
+                self.player_host.team.team_money += 5
+                self.player_guest.team.team_money += 5
                 self.cur_player.team.total_turn += 1
                 self.total_turn += 1
         return

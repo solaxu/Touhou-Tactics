@@ -556,6 +556,9 @@ class PrototypeLevelMap(LevelMap):
         self.tile_imgs[Prototype_Map_Enum.TILE_SAND.value] = self.tile_sets[Prototype_Map_Enum.TILE_SET_OUTSIDE_A5].subsurface((72,72, Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value))
         self.tile_imgs[Prototype_Map_Enum.TILE_TREE.value] = self.tile_sets[Prototype_Map_Enum.TILE_SET_OUTSIDE_B].subsurface((468, 180, Prototype_Map_Enum.TILE_WIDTH.value, Prototype_Map_Enum.TILE_HEIGHT.value))
 
+        # teleporters
+        self.teleporters = []
+
         # load from csv file
         with open("Media/map.csv", "rb") as lvMap:
             reader = csv.reader(lvMap)
@@ -572,6 +575,8 @@ class PrototypeLevelMap(LevelMap):
                     if t == Prototype_Map_Enum.TILE_SAND.value or t == Prototype_Map_Enum.TILE_SAFE_AREA.value:
                         occupy = True
                     tile = MapTile(self.tile_imgs[t], self.tile_width, self.tile_height, not occupy)
+                    if t == Prototype_Map_Enum.TILE_TELEPORTER.value:
+                        self.teleporters.append(tile)
 #                    print str(occupy) + " ",
                     tile.set_pos(self.tile_width * index_x, self.tile_height * index_y)
                     self.tiles.append(tile)
