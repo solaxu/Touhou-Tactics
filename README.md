@@ -25,6 +25,12 @@ There are also many differences between the original Game Design(if there are de
 
 # Touhou-Tactics
 
+2017.07.25：急于求成乃是万恶之源。增加Design文件夹，存放相关的一些设计。
+
+项目需要重写了，满足不了需求。
+
+---------------------------------
+
 第一次尝试写一个能玩的SLG demo，目前还处于初级阶段，主要是为了踩踩相关的坑 :p
 
 代码写的乱，因为是边想边写的打补丁“修正主义”，有许多的粘贴代码，准备整体先走一遍。
